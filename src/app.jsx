@@ -547,7 +547,7 @@ function StandingsView({ teamData, data, season, capCeiling, onTeamClick, select
       )}
       {selectedTeam && (
         <div ref={detailRef} style={{marginTop: 24}}>
-          <TeamDetail team={selectedTeam} capCeiling={capCeiling} onClose={() => onTeamClick(selectedTeam)}/>
+          <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={() => onTeamClick(selectedTeam)}/>
         </div>
       )}
     </div>
@@ -905,6 +905,190 @@ function TradePanel({ side, abbr, roster, selected, onToggle, onTeamChange, allA
   );
 }
 
+// ---------- CAP SHEET VIEW (white / green) ----------
+function fmtFull(n){ return "$" + safeNum(n).toLocaleString("en-US"); }
+function lastFirst(name){
+  const parts = (name||"").trim().split(/\s+/);
+  if(parts.length < 2) return name || "";
+  const last = parts.pop();
+  return last + ", " + parts.join(" ");
+}
+function IcoShield({ntc}){
+  return (<svg width="13" height="13" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}}
+    fill={ntc?"none":"#64748b"} stroke={ntc?"#aab4c2":"none"} strokeWidth="2.2" aria-hidden="true">
+    <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/></svg>);
+}
+function IcoCoin(){
+  return (<svg width="13" height="13" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}} fill="#c79a2b" aria-hidden="true">
+    <path d="M8 7h8l-1 3a5 5 0 1 1-6 0z"/></svg>);
+}
+function IcoArb(){
+  return (<svg width="13" height="13" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}} fill="none" stroke="#5b6776" strokeWidth="2" aria-hidden="true">
+    <path d="M7 4v16M7 4l-3 4M7 4l3 4M17 20V4M17 20l-3-4M17 20l3-4"/></svg>);
+}
+function IcoCap(){
+  return (<svg width="14" height="14" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}} fill="#5b6776" aria-hidden="true">
+    <path d="M12 4L2 9l10 5 8-4v5h2V9z"/><path d="M6 12v4c0 1 3 3 6 3s6-2 6-3v-4l-6 3z"/></svg>);
+}
+function deriveRich(p){
+  const aav = safeNum(p.aav);
+  let clause = null;
+  if(aav >= 7000000) clause = "NMC";
+  else if(aav >= 4000000) clause = "NTC";
+  const elc = aav > 0 && aav <= 1000000;
+  const bonus = aav >= 6000000 || elc;
+  const arb = elc || (p.type === "RFA" && aav < 4000000);
+  const ir = p.category === "ir" || p.category === "ltir";
+  return { clause, elc, bonus, arb, ir };
+}
+function deriveStatus(p, rich){ return (rich.elc || p.type === "RFA") ? "RFA" : "UFA"; }
+function deriveEndIdx(p, curIdx, seasons){
+  const yl = safeNum(p.years);
+  let len = yl > 1 ? yl : null;
+  if(!len){
+    const a = safeNum(p.aav) / 1000000;
+    len = Math.max(1, Math.min(8, Math.round(a / 1.6) + 1 + ((p.name||"").length % 3 - 1)));
+  }
+  return Math.min(seasons.length - 1, curIdx + len - 1);
+}
+function ExpiryPill({ kind }){
+  const ufa = kind === "UFA";
+  return <span style={{display:"inline-block",fontSize:12,fontWeight:600,padding:"4px 12px",borderRadius:7,
+    background: ufa?"#fbe9ec":"#e7f6ee", color: ufa?"#9b2c3f":"#15803d",
+    border:"1px solid "+(ufa?"#f1ccd4":"#c4e9d3")}}>{kind}</span>;
+}
+function CapCell({ cell }){
+  if(!cell) return <td style={{padding:"9px 14px"}} />;
+  if(cell.badge) return <td style={{padding:"9px 14px",textAlign:"right"}}><ExpiryPill kind={cell.badge}/></td>;
+  const r = cell.rich || {};
+  return (
+    <td style={{padding:"9px 14px",textAlign:"right",color:"#1d2733",fontWeight:600}}>
+      <span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
+        {r.bonus && cell.first && <IcoCoin/>}
+        {r.arb && cell.first && <IcoArb/>}
+        {r.clause && <IcoShield ntc={r.clause==="NTC"}/>}
+        {fmtFull(cell.v)}
+      </span>
+    </td>
+  );
+}
+function CapSheetGroup({ label, rows, displayIdxs }){
+  if(rows.length === 0) return null;
+  const totals = displayIdxs.map((_, ci) => rows.reduce((s, r) => { const c = r.cells[ci]; return s + (c && c.v ? c.v : 0); }, 0));
+  return (
+    <React.Fragment>
+      <tr style={{background:"#f3faf6",borderTop:"1px solid #e6eaf0",borderBottom:"1px solid #e6eaf0"}}>
+        <td style={{padding:"8px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.06em"}}>
+          {label} <span style={{color:"#97a2b0",fontWeight:500}}>{rows.length}</span>
+        </td>
+        {totals.map((t, i) => <td key={i} style={{padding:"8px 14px",textAlign:"right",fontSize:12,fontWeight:700,color:"#15803d"}}>{t? fmtFull(t) : ""}</td>)}
+      </tr>
+      {rows.map((r, ri) => (
+        <tr key={r.id || ri} style={{borderBottom:"1px solid #eef2f6", background: ri%2 ? "#f7faf8" : "#fff"}}>
+          <td style={{padding:"9px 14px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:6,fontWeight:600,fontSize:14}}>
+              {lastFirst(r.name)}
+              <span style={{display:"inline-flex",gap:5,alignItems:"center"}}>
+                {r.rich.ir && <span style={{display:"inline-flex",alignItems:"center",gap:3,background:"#fdecec",color:"#c23b3b",fontSize:10,fontWeight:600,padding:"1px 5px",borderRadius:5}}>IR</span>}
+                {r.rich.elc && <IcoCap/>}
+                {r.rich.arb && <IcoArb/>}
+              </span>
+            </div>
+            <div style={{fontSize:12,color:"#97a2b0",marginTop:1}}>
+              <span style={{color:"#5b6776",fontWeight:600}}>age {r.age || "—"}</span> &nbsp;{r.pos}
+            </div>
+          </td>
+          {r.cells.map((c, ci) => <CapCell key={ci} cell={c}/>)}
+        </tr>
+      ))}
+    </React.Fragment>
+  );
+}
+function CapSheetView({ team, data, season, capCeiling, onClose }){
+  const seasons = data.meta?.seasons || [];
+  const curIdx = seasons.indexOf(season);
+  const displayIdxs = [];
+  for(let i=0; i<6 && curIdx+i < seasons.length; i++) displayIdxs.push(curIdx+i);
+  const displaySeasons = displayIdxs.map(i => seasons[i]);
+
+  function model(p){
+    const rich = deriveRich(p);
+    const endIdx = deriveEndIdx(p, curIdx, seasons);
+    const status = deriveStatus(p, rich);
+    let firstUsed = false;
+    const cells = displayIdxs.map(idx => {
+      if(idx >= curIdx && idx <= endIdx){
+        const first = !firstUsed; firstUsed = true;
+        return { v: idx === curIdx ? p.capHit : p.aav, rich, first };
+      }
+      if(idx === endIdx + 1) return { badge: status };
+      return null;
+    });
+    return { ...p, rich, status, cells };
+  }
+  const F=[], D=[], G=[];
+  team.roster.forEach(p => {
+    const m = model(p);
+    if(p.pos === "D") D.push(m);
+    else if(p.pos === "G") G.push(m);
+    else F.push(m);
+  });
+  [F,D,G].forEach(g => g.sort((a,b) => safeNum(b.aav) - safeNum(a.aav)));
+  const grand = displayIdxs.map((_, ci) => [...F,...D,...G].reduce((s,r)=>{const c=r.cells[ci]; return s+(c&&c.v?c.v:0);},0));
+
+  return (
+    <div style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:14,padding:"18px 18px 16px",marginTop:24,color:"#1d2733",fontFamily:"'Barlow',sans-serif"}}>
+      <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:16,flexWrap:"wrap"}}>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{width:10,height:10,borderRadius:"50%",background: team.color || "#16a34a",display:"inline-block"}}/>
+          <span style={{fontSize:22,fontWeight:700,fontFamily:"'Barlow Condensed',sans-serif"}}>{team.name}</span>
+        </div>
+        <div style={{fontSize:13,color:"#97a2b0",paddingBottom:2}}>{team.division} Division · cap sheet</div>
+        <div style={{marginLeft:"auto",display:"flex",gap:18,alignItems:"center"}}>
+          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(capCeiling)}</div><div style={{fontSize:11,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em"}}>Ceiling</div></div>
+          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(team.payroll)}</div><div style={{fontSize:11,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap Hit</div></div>
+          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,color: team.space<0?"#d6453f":"#16a34a",fontFamily:"'Space Mono',monospace"}}>{team.space<0?"-":"+"}{fmtM(Math.abs(team.space))}</div><div style={{fontSize:11,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em"}}>Space</div></div>
+          <button onClick={onClose} style={{background:"#f3f6f9",border:"1px solid #d8dee7",color:"#5b6776",cursor:"pointer",width:30,height:30,borderRadius:6,fontSize:15}}>✕</button>
+        </div>
+      </div>
+
+      <div style={{height:3,background:"#16a34a",borderRadius:"3px 3px 0 0"}}/>
+      <div style={{overflowX:"auto",border:"1px solid #e6eaf0",borderTop:"none",borderRadius:"0 0 12px 12px"}}>
+        <table style={{width:"100%",borderCollapse:"collapse",minWidth:760,fontVariantNumeric:"tabular-nums",background:"#fff"}}>
+          <thead>
+            <tr style={{borderBottom:"1px solid #e6eaf0"}}>
+              <th style={{textAlign:"left",padding:"11px 14px",fontSize:11,fontWeight:600,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em",minWidth:180}}>Player</th>
+              {displaySeasons.map((s, i) => (
+                <th key={s} style={{textAlign:"right",padding:"11px 14px",fontSize:11,fontWeight:i===0?700:600,
+                  color:i===0?"#15803d":"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em",
+                  borderBottom:i===0?"2px solid #16a34a":"none"}}>{s}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            <CapSheetGroup label="Forwards" rows={F} displayIdxs={displayIdxs}/>
+            <CapSheetGroup label="Defense" rows={D} displayIdxs={displayIdxs}/>
+            <CapSheetGroup label="Goaltenders" rows={G} displayIdxs={displayIdxs}/>
+          </tbody>
+          <tfoot>
+            <tr style={{borderTop:"2px solid #d6e6dc",background:"#f3faf6"}}>
+              <td style={{padding:"11px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap hit total</td>
+              {grand.map((t, i) => <td key={i} style={{padding:"11px 14px",textAlign:"right",fontWeight:700}}>{t? fmtFull(t):""}</td>)}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+      <div style={{display:"flex",gap:16,flexWrap:"wrap",marginTop:12,fontSize:12,color:"#5b6776",alignItems:"center"}}>
+        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoShield/> NMC / <IcoShield ntc/> NTC clause</span>
+        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoCoin/> Signing bonus</span>
+        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoArb/> Arbitration</span>
+        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoCap/> Entry-level</span>
+        <span style={{marginLeft:"auto",color:"#b3bcc7",fontStyle:"italic"}}>Sample clause / bonus / term data — replaced by your spreadsheet values.</span>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState("");
@@ -1084,7 +1268,7 @@ function App() {
           </div>
 
           {selectedTeam && (
-            <TeamDetail team={selectedTeam} capCeiling={capCeiling} onClose={()=>setSelectedTeamAbbr(null)} />
+            <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={()=>setSelectedTeamAbbr(null)} />
           )}
         </>)}
 
