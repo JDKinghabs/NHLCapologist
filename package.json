@@ -1,0 +1,15 @@
+{
+  "name": "icecap-nhl-cap-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "IceCap — NHL salary cap tracker (static site).",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "refresh": "node scripts/refresh-data.js",
+    "serve": "node scripts/serve.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2"
+  }
+}
