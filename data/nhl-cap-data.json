@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updated": "2026-07-21",
+    "updated": "2026-07-22",
     "defaultSeason": "2025-26",
     "seasons": [
       "2024-25",
@@ -54,7 +54,7 @@
         "projected": true
       }
     },
-    "notes": "2025-26 cap sheets refreshed from Spotrac on 2026-07-21. Future cap figures remain projections.",
+    "notes": "2025-26 cap sheets refreshed from Spotrac on 2026-07-22. Future cap figures remain projections.",
     "schemaVersion": 2,
     "capSheetSchema": {
       "itemKinds": [
@@ -31459,7 +31459,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/boston-bruins/cap/_/year/2025",
           "Active adjusted=93496117; minor adjusted=586231; buyout adjusted=749869; retained adjusted=615000.",
           "Spotrac total allocations=$94,610,342; cap space=$889,658."
@@ -31833,7 +31833,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/buffalo-sabres/cap/_/year/2025",
           "Active adjusted=86255172; minor adjusted=477309; buyout adjusted=5352101; retained adjusted=0.",
           "Spotrac total allocations=$94,577,498; cap space=$922,502."
@@ -32206,7 +32206,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/detroit-red-wings/cap/_/year/2025",
           "Active adjusted=75595187; minor adjusted=3121047; buyout adjusted=4363644; retained adjusted=0.",
           "Spotrac total allocations=$83,079,878; cap space=$11,133,543."
@@ -32537,7 +32537,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/florida-panthers/cap/_/year/2025",
           "Active adjusted=80244507; minor adjusted=1179869; buyout adjusted=601452; retained adjusted=0.",
           "Spotrac total allocations=$103,550,828; cap space=$0."
@@ -32859,7 +32859,7 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/montreal-canadiens/cap/_/year/2025",
           "Active adjusted=84788991; minor adjusted=712030; buyout adjusted=0; retained adjusted=0.",
           "Spotrac total allocations=$93,701,889; cap space=$45,611."
@@ -33215,7 +33215,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/ottawa-senators/cap/_/year/2025",
           "Active adjusted=87045569; minor adjusted=1005437; buyout adjusted=4113020; retained adjusted=1000000.",
           "Spotrac total allocations=$93,164,026; cap space=$2,335,974."
@@ -33576,7 +33576,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/tampa-bay-lightning/cap/_/year/2025",
           "Active adjusted=86316790; minor adjusted=386986; buyout adjusted=1154426; retained adjusted=0.",
           "Spotrac total allocations=$96,635,857; cap space=$0."
@@ -33925,7 +33925,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/toronto-maple-leafs/cap/_/year/2025",
           "Active adjusted=83152392; minor adjusted=1363364; buyout adjusted=5058994; retained adjusted=0.",
           "Spotrac total allocations=$93,328,266; cap space=$1,545,504."
@@ -34299,7 +34299,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/carolina-hurricanes/cap/_/year/2025",
           "Active adjusted=85205646; minor adjusted=1868809; buyout adjusted=48437; retained adjusted=0.",
           "Spotrac total allocations=$87,122,892; cap space=$8,344,108."
@@ -34665,7 +34665,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/columbus-blue-jackets/cap/_/year/2025",
           "Active adjusted=80480144; minor adjusted=3341760; buyout adjusted=2332814; retained adjusted=0.",
           "Spotrac total allocations=$86,750,551; cap space=$8,749,449."
@@ -35022,7 +35022,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/new-jersey-devils/cap/_/year/2025",
           "Active adjusted=87939113; minor adjusted=1563926; buyout adjusted=4636849; retained adjusted=0.",
           "Spotrac total allocations=$97,753,351; cap space=$0."
@@ -35381,7 +35381,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/new-york-islanders/cap/_/year/2025",
           "Active adjusted=76121659; minor adjusted=1347470; buyout adjusted=4449232; retained adjusted=0.",
           "Spotrac total allocations=$98,863,361; cap space=$0."
@@ -35765,7 +35765,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/new-york-rangers/cap/_/year/2025",
           "Active adjusted=79018895; minor adjusted=1771481; buyout adjusted=10295617; retained adjusted=2183035.",
           "Spotrac total allocations=$93,684,253; cap space=$1,815,747."
@@ -36170,7 +36170,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/philadelphia-flyers/cap/_/year/2025",
           "Active adjusted=74117451; minor adjusted=1091383; buyout adjusted=5000873; retained adjusted=5071428.",
           "Spotrac total allocations=$88,417,127; cap space=$7,082,873."
@@ -36596,7 +36596,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/pittsburgh-penguins/cap/_/year/2025",
           "Active adjusted=75452496; minor adjusted=1762088; buyout adjusted=10020831; retained adjusted=0.",
           "Spotrac total allocations=$87,127,273; cap space=$8,372,727."
@@ -36995,7 +36995,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/cap/_/year/2025",
           "Active adjusted=80877474; minor adjusted=2229693; buyout adjusted=8616275; retained adjusted=0.",
           "Spotrac total allocations=$91,100,347; cap space=$4,399,653."
@@ -37347,7 +37347,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/chicago-blackhawks/cap/_/year/2025",
           "Active adjusted=51739048; minor adjusted=75654; buyout adjusted=15594510; retained adjusted=3491536.",
           "Spotrac total allocations=$80,376,257; cap space=$13,435,809."
@@ -37720,7 +37720,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/colorado-avalanche/cap/_/year/2025",
           "Active adjusted=88043476; minor adjusted=1364727; buyout adjusted=5300135; retained adjusted=0.",
           "Spotrac total allocations=$94,791,801; cap space=$708,199."
@@ -38082,7 +38082,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/cap/_/year/2025",
           "Active adjusted=86528957; minor adjusted=183710; buyout adjusted=1433334; retained adjusted=0.",
           "Spotrac total allocations=$97,996,001; cap space=$0."
@@ -38469,7 +38469,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/minnesota-wild/cap/_/year/2025",
           "Active adjusted=87768174; minor adjusted=1233630; buyout adjusted=4957074; retained adjusted=0.",
           "Spotrac total allocations=$93,211,924; cap space=$1,188,076."
@@ -38829,7 +38829,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/nashville-predators/cap/_/year/2025",
           "Active adjusted=73644528; minor adjusted=152859; buyout adjusted=14416773; retained adjusted=1678706.",
           "Spotrac total allocations=$88,282,188; cap space=$7,217,812."
@@ -39232,7 +39232,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/st-louis-blues/cap/_/year/2025",
           "Active adjusted=70203949; minor adjusted=678940; buyout adjusted=14422537; retained adjusted=0.",
           "Spotrac total allocations=$91,805,426; cap space=$1,541,099."
@@ -39600,7 +39600,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/winnipeg-jets/cap/_/year/2025",
           "Active adjusted=85719775; minor adjusted=669434; buyout adjusted=5515787; retained adjusted=300781.",
           "Spotrac total allocations=$92,205,777; cap space=$3,294,223."
@@ -39974,7 +39974,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/utah-mammoth/cap/_/year/2025",
           "Active adjusted=85632381; minor adjusted=232633; buyout adjusted=4266146; retained adjusted=800000.",
           "Spotrac total allocations=$90,017,781; cap space=$5,482,219."
@@ -40291,7 +40291,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/anaheim-ducks/cap/_/year/2025",
           "Active adjusted=72400153; minor adjusted=770868; buyout adjusted=3906236; retained adjusted=2500000.",
           "Spotrac total allocations=$83,827,257; cap space=$10,732,743."
@@ -40657,7 +40657,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/calgary-flames/cap/_/year/2025",
           "Active adjusted=58898955; minor adjusted=917526; buyout adjusted=13089853; retained adjusted=2917708.",
           "Spotrac total allocations=$85,952,528; cap space=$9,547,472."
@@ -41049,7 +41049,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/edmonton-oilers/cap/_/year/2025",
           "Active adjusted=73893466; minor adjusted=1916449; buyout adjusted=7909048; retained adjusted=0.",
           "Spotrac total allocations=$97,738,860; cap space=$0."
@@ -41423,7 +41423,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/los-angeles-kings/cap/_/year/2025",
           "Active adjusted=72405846; minor adjusted=412782; buyout adjusted=6998444; retained adjusted=218750.",
           "Spotrac total allocations=$91,634,624; cap space=$3,652,876."
@@ -41811,7 +41811,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/san-jose-sharks/cap/_/year/2025",
           "Active adjusted=53270293; minor adjusted=1372816; buyout adjusted=14702947; retained adjusted=2887500.",
           "Spotrac total allocations=$90,729,494; cap space=$272,655."
@@ -42185,7 +42185,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/seattle-kraken/cap/_/year/2025",
           "Active adjusted=87408503; minor adjusted=714974; buyout adjusted=3044532; retained adjusted=0.",
           "Spotrac total allocations=$91,168,009; cap space=$4,331,991."
@@ -42590,7 +42590,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/vancouver-canucks/cap/_/year/2025",
           "Active adjusted=64331004; minor adjusted=1181041; buyout adjusted=15462778; retained adjusted=1056250.",
           "Spotrac total allocations=$93,479,473; cap space=$2,020,527."
@@ -42952,7 +42952,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2025-26 cap table on 2026-07-21.",
+          "Imported from Spotrac 2025-26 cap table on 2026-07-22.",
           "Source URL: https://www.spotrac.com/nhl/vegas-golden-knights/cap/_/year/2025",
           "Active adjusted=88619955; minor adjusted=2034242; buyout adjusted=2133277; retained adjusted=0.",
           "Spotrac total allocations=$107,487,474; cap space=$0."
