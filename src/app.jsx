@@ -436,23 +436,21 @@ function ProjectionsView({ teamData, data, capCeiling }) {
     return safeNum(seasonCommitments?.[season]?.[teamAbbr]);
   }
 
-  function getExpiringInSeason(teamAbbr, season) {
-    const s = data.meta?.seasons || [];
-    const idx = s.indexOf(season);
-    if (idx === -1) return [];
-    const nextSeason = s[idx + 1];
-    if (!nextSeason) return [];
-    return (data.contracts || [])
-      .filter(c => c.team === teamAbbr)
-      .filter(c => {
-        const list = buildSeasonList(c.startSeason, c.years);
-        return list.includes(season) && !list.includes(nextSeason);
-      })
-      .map(c => {
-        const p = (data.players || []).find(pl => pl.id === c.playerId);
-        return { name: p?.name || c.playerId, pos: p?.pos || "-", aav: c.aav };
-      });
-  }
+  // Contracts ending after each season, unless the player has already
+  // signed his next contract with the same team.
+  const pendingBySeason = useMemo(() => {
+    const playersById = Object.fromEntries((data.players || []).map(p => [p.id, p]));
+    const starts = new Set((data.contracts || []).map(c => `${c.team}|${c.playerId}|${c.startSeason}`));
+    const map = {};
+    (data.contracts || []).forEach(c => {
+      if (starts.has(`${c.team}|${c.playerId}|${seasonAt(c.startSeason, c.years)}`)) return;
+      const last = seasonAt(c.startSeason, c.years - 1);
+      const p = playersById[c.playerId];
+      (map[last] = map[last] || []).push({ team: c.team, name: p?.name || c.playerId, pos: p?.pos || "-", aav: c.aav, status: c.expiryStatus || null });
+    });
+    Object.values(map).forEach(list => list.sort((a, b) => safeNum(b.aav) - safeNum(a.aav)));
+    return map;
+  }, [data]);
 
   const teamsToShow = (showAll ? teamData : teamData.filter(t => selectedAbbrs.includes(t.abbr)))
     .sort((a,b) => a.abbr.localeCompare(b.abbr));
@@ -476,11 +474,20 @@ function ProjectionsView({ teamData, data, capCeiling }) {
         {seasons.map(season => {
           const capInfo = caps[season] || {};
           const ceiling = safeNum(capInfo.ceiling);
+          const shown = new Set(teamsToShow.map(t => t.abbr));
+          const pending = (pendingBySeason[season] || []).filter(p => shown.has(p.team));
+          const ufa = pending.filter(p => p.status === "UFA").length;
+          const rfa = pending.filter(p => p.status === "RFA").length;
           return (
             <div key={season} className="proj-season-row">
               <div className="proj-season-header">
                 <span className="proj-season-label">{season}</span>
                 {capInfo.projected && <span className="proj-projected-badge">Projected</span>}
+                {pending.length > 0 && (
+                  <span className="proj-cap-label" title="Contracts ending after this season that have not been extended. Status at expiry comes from Spotrac.">
+                    Expiring: {ufa} UFA · {rfa} RFA{pending.length > ufa + rfa ? ` · ${pending.length - ufa - rfa} status unknown` : ""}
+                  </span>
+                )}
                 <span className="proj-cap-label">Cap Ceiling</span>
                 <span className="proj-cap-val">{fmtM(ceiling)}</span>
               </div>
@@ -505,20 +512,16 @@ function ProjectionsView({ teamData, data, capCeiling }) {
                   );
                 })}
               </div>
-              {teamsToShow.length === 1 && (() => {
-                const expiring = getExpiringInSeason(teamsToShow[0].abbr, season);
-                if (!expiring.length) return null;
-                return (
-                  <div className="proj-expiry-row">
-                    <span className="proj-expiry-label">Expiring:</span>
-                    {expiring.map((p, i) => (
-                      <span key={i} className="proj-expiry-pill">
-                        <span>{p.pos}</span>{p.name} {fmtM(p.aav)}
-                      </span>
-                    ))}
-                  </div>
-                );
-              })()}
+              {teamsToShow.length === 1 && pending.length > 0 && (
+                <div className="proj-expiry-row">
+                  <span className="proj-expiry-label">Expiring:</span>
+                  {pending.map((p, i) => (
+                    <span key={i} className="proj-expiry-pill">
+                      <span>{p.pos}</span>{p.name} {fmtM(p.aav)}{p.status ? ` · ${p.status}` : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -527,14 +530,26 @@ function ProjectionsView({ teamData, data, capCeiling }) {
   );
 }
 
+const MAX_CONTRACTS = 50;
+const MAX_RETAINED = 3;
+const RETENTION_STEPS = [0, 10, 15, 20, 25, 30, 35, 40, 45, 50];
+
+// Standard contracts and retained-salary slots in use, from the season's cap sheet.
+function rosterLimits(data, season, abbr) {
+  const sheet = data.capSheets?.[season]?.[abbr];
+  return {
+    contracts: (sheet?.items || []).filter(item => item.kind === "player").length,
+    retained: (sheet?.adjustments || []).filter(adj => adj.category === "retainedSalary").length,
+  };
+}
+
 function TradeView({ teamData, data, capCeiling, season }) {
   const [teamA, setTeamA] = useState("TOR");
   const [teamB, setTeamB] = useState("EDM");
   const [selectedA, setSelectedA] = useState([]);
   const [selectedB, setSelectedB] = useState([]);
-  const [tradeResult, setTradeResult] = useState(null);
-
-  const seasons = data?.meta?.seasons || [];
+  // Percent of each outgoing player's cap hit his current team keeps.
+  const [retention, setRetention] = useState({});
 
   function getRoster(abbr) {
     return teamData.find(t => t.abbr === abbr)?.roster || [];
@@ -545,49 +560,41 @@ function TradeView({ teamData, data, capCeiling, season }) {
     else setSelectedB(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
   }
 
-  function getSelected(roster, ids) {
-    return roster.filter(p => ids.includes(p.id));
-  }
-
-  function executeTrade() {
-    const rA = getRoster(teamA);
-    const rB = getRoster(teamB);
-    const toB = getSelected(rA, selectedA);
-    const toA = getSelected(rB, selectedB);
-    const newA = rA.filter(p => !selectedA.includes(p.id)).concat(toA.map(p => ({...p, team: teamA})));
-    const newB = rB.filter(p => !selectedB.includes(p.id)).concat(toB.map(p => ({...p, team: teamB})));
-    const payA = newA.reduce((s,p) => s + safeNum(p.capHit), 0);
-    const payB = newB.reduce((s,p) => s + safeNum(p.capHit), 0);
-    setTradeResult({ teamA, teamB, payA, payB, toA, toB, prevPayA: rA.reduce((s,p)=>s+safeNum(p.capHit),0), prevPayB: rB.reduce((s,p)=>s+safeNum(p.capHit),0) });
-  }
-
   function resetTrade() {
-    setSelectedA([]); setSelectedB([]); setTradeResult(null);
+    setSelectedA([]); setSelectedB([]); setRetention({});
   }
 
   const rosterA = getRoster(teamA);
   const rosterB = getRoster(teamB);
-  const teamDataA = teamData.find(t => t.abbr === teamA);
-  const teamDataB = teamData.find(t => t.abbr === teamB);
-
-  const tradeDeltaA = getSelected(rosterB, selectedB).reduce((s,p) => s + safeNum(p.capHit), 0)
-                    - getSelected(rosterA, selectedA).reduce((s,p) => s + safeNum(p.capHit), 0);
-  const tradeDeltaB = -tradeDeltaA;
-
-  const previewPayA = safeNum(teamDataA?.payroll) + tradeDeltaA;
-  const previewPayB = safeNum(teamDataB?.payroll) + tradeDeltaB;
-  const spaceA = capCeiling - previewPayA;
-  const spaceB = capCeiling - previewPayB;
-
   const sameTeam = teamA === teamB;
   const canTrade = !sameTeam && (selectedA.length > 0 || selectedB.length > 0);
   const allTeamAbbrs = teamData.map(t => t.abbr).sort();
+  const retained = (p) => Math.round(safeNum(p.capHit) * (retention[p.id] || 0) / 100);
 
-  function getValidity(space) {
-    if (space < 0) return { cls: "err", label: "OVER CAP" };
-    if (space < 3000000) return { cls: "warn", label: "TIGHT" };
-    return { cls: "ok", label: "VALID" };
+  function evaluate(abbr, sending, receiving) {
+    const team = teamData.find(t => t.abbr === abbr);
+    const limits = rosterLimits(data, season, abbr);
+    const delta =
+      receiving.reduce((s, p) => s + safeNum(p.capHit) - retained(p), 0) -
+      sending.reduce((s, p) => s + safeNum(p.capHit) - retained(p), 0);
+    const newPay = safeNum(team?.payroll) + delta;
+    const space = capCeiling - newPay;
+    const contracts = limits.contracts - sending.length + receiving.length;
+    const retainedSlots = limits.retained + sending.filter(p => retention[p.id]).length;
+    const problems = [
+      space < 0 && "Over the cap",
+      contracts > MAX_CONTRACTS && `Over ${MAX_CONTRACTS} contracts`,
+      retainedSlots > MAX_RETAINED && `Over ${MAX_RETAINED} retained contracts`,
+    ].filter(Boolean);
+    const status = problems.length
+      ? { cls: "err", label: problems.join(" · ") }
+      : space < 3000000 ? { cls: "warn", label: "Valid · tight" } : { cls: "ok", label: "Valid" };
+    return { abbr, color: team?.color, prevPay: safeNum(team?.payroll), delta, newPay, space, contracts, retainedSlots, status, sending, receiving };
   }
+
+  const sentA = rosterA.filter(p => selectedA.includes(p.id));
+  const sentB = rosterB.filter(p => selectedB.includes(p.id));
+  const sides = [evaluate(teamA, sentA, sentB), evaluate(teamB, sentB, sentA)];
 
   return (
     <div>
@@ -595,103 +602,99 @@ function TradeView({ teamData, data, capCeiling, season }) {
         <TradePanel
           side="A" abbr={teamA} roster={rosterA} selected={selectedA}
           onToggle={id => togglePlayer(id, "A")}
-          onTeamChange={abbr => { setTeamA(abbr); setSelectedA([]); setTradeResult(null); }}
-          allAbbrs={allTeamAbbrs} teamData={teamDataA} capCeiling={capCeiling}
+          onTeamChange={abbr => { setTeamA(abbr); setSelectedA([]); }}
+          allAbbrs={allTeamAbbrs} teamData={teamData.find(t => t.abbr === teamA)} capCeiling={capCeiling}
         />
         <div className="trade-middle">
           <div className="trade-arrow">⇄</div>
-          {sameTeam ? (
-            <div className="trade-valid-badge warn" style={{textAlign:"center",padding:"8px 12px"}}>⚠ Select two<br/>different teams</div>
-          ) : (
-            <button className="trade-btn" disabled={!canTrade} onClick={executeTrade}>
-              Execute Trade
-            </button>
-          )}
+          {sameTeam && <div className="trade-valid-badge warn" style={{textAlign:"center",padding:"8px 12px"}}>⚠ Select two<br/>different teams</div>}
+          {canTrade && sides.map(t => (
+            <span key={t.abbr} className={`trade-valid-badge ${t.status.cls}`} style={{textAlign:"center"}}>{t.abbr}: {t.status.label}</span>
+          ))}
           <button className="trade-btn reset" onClick={resetTrade}>Reset</button>
-          {canTrade && !tradeResult && (
-            <div style={{textAlign:"center",marginTop:4}}>
-              <div style={{fontSize:11,color:"var(--text3)",marginBottom:4,fontFamily:"'Barlow Condensed',sans-serif",letterSpacing:"0.06em",textTransform:"uppercase"}}>Preview</div>
-              <span className={`trade-valid-badge ${getValidity(spaceA).cls}`}>{teamA}: {getValidity(spaceA).label}</span>
-              <br/><br/>
-              <span className={`trade-valid-badge ${getValidity(spaceB).cls}`}>{teamB}: {getValidity(spaceB).label}</span>
-            </div>
-          )}
         </div>
         <TradePanel
           side="B" abbr={teamB} roster={rosterB} selected={selectedB}
           onToggle={id => togglePlayer(id, "B")}
-          onTeamChange={abbr => { setTeamB(abbr); setSelectedB([]); setTradeResult(null); }}
-          allAbbrs={allTeamAbbrs} teamData={teamDataB} capCeiling={capCeiling}
+          onTeamChange={abbr => { setTeamB(abbr); setSelectedB([]); }}
+          allAbbrs={allTeamAbbrs} teamData={teamData.find(t => t.abbr === teamB)} capCeiling={capCeiling}
         />
       </div>
 
-      {(canTrade || tradeResult) && (
+      {canTrade && (
         <div className="trade-cap-summary">
-          <div className="trade-summary-header" style={{display:"flex",alignItems:"center",gap:12}}>
-            Trade Summary
-            {tradeResult && <span className="proj-projected-badge" style={{fontFamily:"'Barlow Condensed',sans-serif"}}>EXECUTED</span>}
-          </div>
+          <div className="trade-summary-header">Trade Summary · {season}</div>
           <div className="trade-summary-grid">
-            {[
-              { abbr: teamA, color: teamDataA?.color, prevPay: safeNum(teamDataA?.payroll), newPay: previewPayA, space: spaceA, players: getSelected(rosterA, selectedA), receiving: getSelected(rosterB, selectedB) },
-              { abbr: teamB, color: teamDataB?.color, prevPay: safeNum(teamDataB?.payroll), newPay: previewPayB, space: spaceB, players: getSelected(rosterB, selectedB), receiving: getSelected(rosterA, selectedA) }
-            ].map(t => {
-              const delta = t.newPay - t.prevPay;
-              const validity = getValidity(t.space);
-              return (
-                <div key={t.abbr} className="trade-summary-team">
-                  <div className="trade-summary-abbr" style={{color: t.color}}>{t.abbr}</div>
-                  {t.players.length > 0 && (
-                    <div style={{marginBottom:10}}>
-                      <div className="trade-selected-label">Sending</div>
-                      {t.players.map(p => (
-                        <div key={p.id} className="trade-selected-pill">
-                          <span className="trade-selected-pill-pos">{p.pos}</span>
-                          <span>{p.name}</span>
-                          <span className="trade-selected-pill-cap">{fmtM(p.capHit)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {t.receiving.length > 0 && (
-                    <div style={{marginBottom:10}}>
-                      <div className="trade-selected-label">Receiving</div>
-                      {t.receiving.map(p => (
-                        <div key={p.id} className="trade-selected-pill">
-                          <span className="trade-selected-pill-pos">{p.pos}</span>
-                          <span>{p.name}</span>
-                          <span className="trade-selected-pill-cap">{fmtM(p.capHit)}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="trade-summary-row">
-                    <span className="trade-summary-lbl">Current Payroll</span>
-                    <span className="trade-summary-val">{fmtM(t.prevPay)}</span>
+            {sides.map(t => (
+              <div key={t.abbr} className="trade-summary-team">
+                <div className="trade-summary-abbr" style={{color: t.color}}>{t.abbr}</div>
+                {t.sending.length > 0 && (
+                  <div style={{marginBottom:10}}>
+                    <div className="trade-selected-label">Sending</div>
+                    {t.sending.map(p => (
+                      <div key={p.id} className="trade-selected-pill">
+                        <span className="trade-selected-pill-pos">{p.pos}</span>
+                        <span>{p.name}</span>
+                        <span className="trade-selected-pill-cap">{fmtM(p.capHit)}</span>
+                        <select aria-label={`Salary ${t.abbr} retains on ${p.name}`} value={retention[p.id] || 0}
+                                onChange={e => setRetention(prev => ({ ...prev, [p.id]: Number(e.target.value) }))}
+                                style={{marginLeft:6,fontSize:11}}>
+                          {RETENTION_STEPS.map(pct => <option key={pct} value={pct}>{pct ? `Retain ${pct}%` : "No retention"}</option>)}
+                        </select>
+                      </div>
+                    ))}
                   </div>
-                  <div className="trade-summary-row">
-                    <span className="trade-summary-lbl">Cap Delta</span>
-                    <span className={`trade-summary-val ${delta > 0 ? "red" : delta < 0 ? "green" : ""}`}>
-                      {delta >= 0 ? "+" : ""}{fmtM(delta)}
-                    </span>
+                )}
+                {t.receiving.length > 0 && (
+                  <div style={{marginBottom:10}}>
+                    <div className="trade-selected-label">Receiving</div>
+                    {t.receiving.map(p => (
+                      <div key={p.id} className="trade-selected-pill">
+                        <span className="trade-selected-pill-pos">{p.pos}</span>
+                        <span>{p.name}</span>
+                        <span className="trade-selected-pill-cap">{fmtM(safeNum(p.capHit) - retained(p))}</span>
+                      </div>
+                    ))}
                   </div>
-                  <div className="trade-summary-row">
-                    <span className="trade-summary-lbl">New Payroll</span>
-                    <span className="trade-summary-val">{fmtM(t.newPay)}</span>
-                  </div>
-                  <div className="trade-summary-row">
-                    <span className="trade-summary-lbl">Cap Space</span>
-                    <span className={`trade-summary-val ${t.space < 0 ? "red" : t.space < 3000000 ? "yellow" : "green"}`}>
-                      {t.space < 0 ? "-" : "+"}{fmtM(Math.abs(t.space))}
-                    </span>
-                  </div>
-                  <div className="trade-summary-row" style={{marginTop:8}}>
-                    <span className="trade-summary-lbl">Status</span>
-                    <span className={`trade-valid-badge ${validity.cls}`}>{validity.label}</span>
-                  </div>
+                )}
+                <div className="trade-summary-row">
+                  <span className="trade-summary-lbl">Current Payroll</span>
+                  <span className="trade-summary-val">{fmtM(t.prevPay)}</span>
                 </div>
-              );
-            })}
+                <div className="trade-summary-row">
+                  <span className="trade-summary-lbl">Cap Change</span>
+                  <span className={`trade-summary-val ${t.delta > 0 ? "red" : t.delta < 0 ? "green" : ""}`}>
+                    {t.delta < 0 ? "-" : "+"}{fmtM(Math.abs(t.delta))}
+                  </span>
+                </div>
+                <div className="trade-summary-row">
+                  <span className="trade-summary-lbl">New Payroll</span>
+                  <span className="trade-summary-val">{fmtM(t.newPay)}</span>
+                </div>
+                <div className="trade-summary-row">
+                  <span className="trade-summary-lbl">Cap Space</span>
+                  <span className={`trade-summary-val ${t.space < 0 ? "red" : t.space < 3000000 ? "yellow" : "green"}`}>
+                    {t.space < 0 ? "-" : "+"}{fmtM(Math.abs(t.space))}
+                  </span>
+                </div>
+                <div className="trade-summary-row">
+                  <span className="trade-summary-lbl">Contracts</span>
+                  <span className={`trade-summary-val ${t.contracts > MAX_CONTRACTS ? "red" : ""}`}>{t.contracts} / {MAX_CONTRACTS}</span>
+                </div>
+                <div className="trade-summary-row">
+                  <span className="trade-summary-lbl">Retained Contracts</span>
+                  <span className={`trade-summary-val ${t.retainedSlots > MAX_RETAINED ? "red" : ""}`}>{t.retainedSlots} / {MAX_RETAINED}</span>
+                </div>
+                <div className="trade-summary-row" style={{marginTop:8}}>
+                  <span className="trade-summary-lbl">Status</span>
+                  <span className={`trade-valid-badge ${t.status.cls}`}>{t.status.label}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:11,color:"var(--text3)",padding:"0 20px 16px"}}>
+            Retention is capped at 50% of a player's cap hit and 3 retained contracts per team. LTIR relief, which lets
+            teams with long-term injuries exceed the ceiling, isn't modelled.
           </div>
         </div>
       )}
