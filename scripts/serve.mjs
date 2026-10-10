@@ -1,29 +1,10 @@
-// Minimal static file server for local verification of the built dist/ folder.
+// Local server for the built dist/ folder, with the same routing as Cloudflare Pages.
 // Usage: npm run serve  (then open http://localhost:3000)
-import { createServer } from "http";
-import { readFile } from "fs";
-import { join, extname, resolve, dirname } from "path";
+import path from "path";
 import { fileURLToPath } from "url";
+import { createStaticServer } from "./static-server.mjs";
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "dist");
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
 const PORT = process.env.PORT || 3000;
-const TYPES = {
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".json": "application/json",
-  ".css": "text/css",
-};
 
-createServer((req, res) => {
-  const urlPath = decodeURIComponent(req.url.split("?")[0]);
-  const file = join(root, urlPath === "/" ? "/index.html" : urlPath);
-  readFile(file, (err, data) => {
-    if (err) {
-      res.writeHead(404);
-      res.end("Not found");
-      return;
-    }
-    res.writeHead(200, { "Content-Type": TYPES[extname(file)] || "text/plain" });
-    res.end(data);
-  });
-}).listen(PORT, () => console.log(`Serving dist/ on http://localhost:${PORT}`));
+createStaticServer(root).listen(PORT, () => console.log(`Serving dist/ on http://localhost:${PORT}`));
