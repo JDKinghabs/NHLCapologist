@@ -27,6 +27,8 @@ const FETCH_DATE = new Date().toISOString().slice(0, 10);
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 const TARGET_ABBR = (process.argv[2] || "").toUpperCase();
+const DEBUG_ABBR = (process.env.SPOTRAC_DEBUG || "").toUpperCase();
+const DEBUG_PLAYER = process.env.SPOTRAC_DEBUG_PLAYER || "";
 
 const REQUEST_DELAY_MS = Number(process.env.REQUEST_DELAY_MS) || 1500;
 const MAX_RETRIES = Number(process.env.MAX_RETRIES) || 3;
@@ -182,6 +184,28 @@ function classifySection(title) {
   if (t.includes("active")) return "active";
   if (/dead|termination|recapture/.test(t)) return "other";
   return null;
+}
+
+// SPOTRAC_DEBUG=<ABBR> prints that team's table markup (header block, <thead>
+// and the first rows of every table) to the log, so the parser can be checked
+// against Spotrac's real HTML. SPOTRAC_DEBUG_PLAYER also prints rows naming
+// that player.
+function dumpMarkup(html, abbr) {
+  const squash = (text) => text.replace(/\s+/g, " ").trim().slice(0, 3000);
+  const pattern =
+    /<div class="table-header[^"]*">((?:(?!<div class="table-header)[\s\S])*?)<table([^>]*)>([\s\S]*?)<\/table>/gi;
+  let match;
+  while ((match = pattern.exec(html))) {
+    const [, header, tableAttrs, tableHtml] = match;
+    const thead = (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i) || [])[1] || "";
+    const rows = extractTbody(tableHtml).match(/<tr[\s\S]*?<\/tr>/gi) || [];
+    console.log(`[debug ${abbr}] SECTION ${squash(stripTags(header))} | rows=${rows.length} | table${squash(tableAttrs)}`);
+    console.log(`[debug ${abbr}] THEAD ${squash(thead)}`);
+    rows.slice(0, 2).forEach((row) => console.log(`[debug ${abbr}] ROW ${squash(row)}`));
+    if (DEBUG_PLAYER) {
+      rows.filter((row) => row.includes(DEBUG_PLAYER)).forEach((row) => console.log(`[debug ${abbr}] MATCH ${squash(row)}`));
+    }
+  }
 }
 
 function extractTbody(tableHtml) {
@@ -476,6 +500,7 @@ async function main() {
       // Fetch + parse first (no mutation); only commit to `data` once parsing
       // fully succeeds, so a failure leaves this team's prior cap sheet intact.
       const html = await fetchSpotracHtml(teamSource);
+      if (DEBUG_ABBR === teamSource.abbr) dumpMarkup(html, teamSource.abbr);
       const parsed = parseTeamPage(teamSource, html);
       console.log(`${teamSource.abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
       parsed.unknown.forEach((section) =>
