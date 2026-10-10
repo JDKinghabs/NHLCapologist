@@ -1,6 +1,7 @@
 name: Refresh cap data
 
-# Re-scrapes Spotrac (each team's current cap page and multi-year page) and commits data/nhl-cap-data.json
+# Re-scrapes Spotrac (each team's current cap page and multi-year page), refreshes
+# standings from the NHL API, and commits data/nhl-cap-data.json
 # when the cap data actually changed (days with no changes produce no commit).
 # The commit (pushed to main) triggers the Cloudflare Pages redeploy.
 
@@ -55,6 +56,13 @@ jobs:
           SPOTRAC_DEBUG_PLAYER: ${{ inputs.debug_player }}
           REFRESH_DRY_RUN: ${{ inputs.dry_run }}
           SPOTRAC_DEBUG_URL: ${{ inputs.debug_url }}
+
+      - name: Refresh standings from the NHL API
+        run: node scripts/refresh-standings.mjs
+        # Cap data still gets committed if the NHL API is down.
+        continue-on-error: true
+        env:
+          REFRESH_DRY_RUN: ${{ inputs.dry_run }}
 
       - name: Commit & push if changed
         run: |

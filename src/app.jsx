@@ -497,9 +497,15 @@ function StandingsView({ teamData, data, season, capCeiling, onTeamClick, select
           <button key={v} className={`filter-btn ${mode===v?"active":""}`} onClick={()=>setMode(v)}>{l}</button>
         ))}
       </div>
-      {!hasData && (
+      {hasData ? (
+        <div className="data-note" style={{marginBottom:12}}>
+          <span>Standings as of {data.meta?.standingsAsOf || "—"} · source: NHL</span>
+        </div>
+      ) : (
         <div className="sample-banner">
-          No standings data for {season}. Add a "standings" key to nhl-cap-data.json to populate this view.
+          {season === data.meta?.seasons?.[0]
+            ? `No ${season} standings yet — they appear once the season is under way.`
+            : `Standings are only kept for the current season (${data.meta?.seasons?.[0]}).`}
         </div>
       )}
       {mode === "division" && (
