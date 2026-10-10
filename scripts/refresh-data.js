@@ -169,12 +169,35 @@ function extractTableHtml(html, headingText) {
   return match[1];
 }
 
-function extractOptionalTableHtml(html, headingText) {
-  try {
-    return extractTableHtml(html, headingText);
-  } catch (error) {
-    return "";
+// Every cap table on a team page sits under a "<SEASON> ..." heading. Each
+// match is limited to its own table-header block, so a heading with no table
+// can never borrow the next section's rows.
+function extractSeasonSections(html) {
+  const pattern =
+    /<div class="table-header[^"]*">((?:(?!<div class="table-header)[\s\S])*?)<table[^>]*>([\s\S]*?)<\/table>/gi;
+  const sections = [];
+  let match;
+  while ((match = pattern.exec(html))) {
+    const h2 = match[1].match(/<h2>([\s\S]*?)<\/h2>/i);
+    const heading = h2 ? stripTags(h2[1]) : "";
+    if (heading.startsWith(`${SEASON} `)) sections.push({ title: heading.slice(SEASON.length + 1), tableHtml: match[2] });
   }
+  return sections;
+}
+
+// Maps a Spotrac section title to a cap-sheet player category or adjustment kind.
+function classifySection(title) {
+  const t = title.toLowerCase();
+  if (t.includes("cap totals")) return "totals";
+  if (t.includes("buyout")) return "buyout";
+  if (t.includes("retained")) return "retained";
+  if (/long[- ]term|ltir/.test(t)) return "ltir";
+  if (t.includes("injured")) return "ir";
+  if (/non[- ]roster/.test(t)) return "nonRoster";
+  if (t.includes("minor")) return "minors";
+  if (t.includes("active")) return "active";
+  if (/dead|termination|recapture/.test(t)) return "other";
+  return null;
 }
 
 function extractTbody(tableHtml) {
@@ -242,14 +265,47 @@ function parseCapTotals(html) {
   return rows;
 }
 
-function parseTeamPage(teamSource, html) {
-  const active = parsePlayerRows(extractTableHtml(html, `${SEASON} Active Roster Cap`));
-  const buyout = parsePlayerRows(extractOptionalTableHtml(html, `${SEASON} Buyout Cap`));
-  const retained = parsePlayerRows(extractOptionalTableHtml(html, `${SEASON} Retained Cap`));
-  const minor = parsePlayerRows(extractOptionalTableHtml(html, `${SEASON} Minor`));
-  const totals = parseCapTotals(html);
+const PLAYER_KINDS = ["active", "ir", "ltir", "nonRoster", "minors"];
+const ADJUSTMENT_KINDS = { buyout: "buyout", retained: "retainedSalary", other: "other" };
 
-  return { active, buyout, retained, minor, totals };
+function parseTeamPage(teamSource, html) {
+  const parsed = { sections: [], unknown: [] };
+  [...PLAYER_KINDS, ...Object.keys(ADJUSTMENT_KINDS)].forEach((kind) => (parsed[kind] = []));
+
+  extractSeasonSections(html).forEach(({ title, tableHtml }) => {
+    const kind = classifySection(title);
+    if (kind === "totals") return;
+    const rows = parsePlayerRows(tableHtml);
+    const sum = rows.reduce((total, row) => total + row.adjustedCap, 0);
+    parsed.sections.push({ title, kind, count: rows.length, sum });
+    if (kind) parsed[kind].push(...rows);
+    else parsed.unknown.push({ title, count: rows.length, sum });
+  });
+
+  if (!parsed.sections.some((section) => section.kind === "active")) {
+    throw new Error(`Could not find an "${SEASON} Active Roster" section`);
+  }
+  parsed.totals = parseCapTotals(html);
+  return parsed;
+}
+
+// A cap hit above the CBA maximum player salary (20% of the ceiling) can only
+// be a data error on the source page, so such rows are dropped.
+function dropImpossibleCapHits(parsed, maxSalary, abbr) {
+  const dropped = [];
+  PLAYER_KINDS.forEach((kind) => {
+    parsed[kind] = parsed[kind].filter((row) => {
+      if (Math.max(row.adjustedCap, row.totalCap) <= maxSalary) return true;
+      dropped.push(row);
+      console.warn(`  ${abbr}: skipped ${row.name} — Spotrac cap hit ${fmtMoney(Math.max(row.adjustedCap, row.totalCap))} exceeds the ${fmtMoney(maxSalary)} max salary`);
+      return false;
+    });
+  });
+  return dropped;
+}
+
+function fmtMoney(amount) {
+  return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
 
 function ensurePlayer(data, playerIndex, row) {
@@ -299,69 +355,49 @@ function ensureSeasonContract(data, playerId, teamAbbr, row) {
   return contract;
 }
 
-function buildCapSheet(teamSource, parsed, data, playerIndex) {
+function buildCapSheet(teamSource, parsed, data, playerIndex, dropped) {
   const items = [];
   const adjustments = [];
 
-  parsed.active.forEach((row) => {
-    const playerId = ensurePlayer(data, playerIndex, row);
-    ensureSeasonContract(data, playerId, teamSource.abbr, row);
-    items.push({
-      kind: "player",
-      playerId,
-      category: "active",
-      capHit: row.adjustedCap,
+  PLAYER_KINDS.forEach((category) => {
+    parsed[category].forEach((row) => {
+      const playerId = ensurePlayer(data, playerIndex, row);
+      ensureSeasonContract(data, playerId, teamSource.abbr, row);
+      items.push({
+        kind: "player",
+        playerId,
+        category,
+        capHit: row.adjustedCap,
+        ...(category === "minors" ? { notes: row.buried ? ["Buried"] : [] } : {}),
+      });
     });
   });
 
-  parsed.minor.forEach((row) => {
-    const playerId = ensurePlayer(data, playerIndex, row);
-    ensureSeasonContract(data, playerId, teamSource.abbr, row);
-    items.push({
-      kind: "player",
-      playerId,
-      category: "minors",
-      capHit: row.adjustedCap,
-      notes: row.buried ? ["Buried"] : [],
+  Object.entries(ADJUSTMENT_KINDS).forEach(([kind, category]) => {
+    parsed[kind].forEach((row, idx) => {
+      adjustments.push({
+        id: `${teamSource.abbr}-${kind}-${idx + 1}`,
+        label: row.name,
+        category,
+        amount: row.adjustedCap,
+        notes:
+          kind === "buyout"
+            ? row.waived ? "Waived / buyout charge from Spotrac" : "Buyout charge from Spotrac"
+            : kind === "retained" ? "Retained salary charge from Spotrac" : "Dead cap charge from Spotrac",
+      });
     });
   });
 
-  parsed.buyout.forEach((row, idx) => {
-    adjustments.push({
-      id: `${teamSource.abbr}-buyout-${idx + 1}`,
-      label: row.name,
-      category: "buyout",
-      amount: row.adjustedCap,
-      notes: row.waived ? "Waived / buyout charge from Spotrac" : "Buyout charge from Spotrac",
-    });
-  });
+  const sectionSummary = parsed.sections.map((section) => `${section.title}=${section.sum}`).join("; ");
+  const notes = [
+    `Imported from Spotrac ${SEASON} cap table on ${FETCH_DATE}.`,
+    `Source URL: https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${YEAR}`,
+    `Sections: ${sectionSummary}.`,
+    `Spotrac total allocations=${parsed.totals["Total Allocations"] || "n/a"}; cap space=${parsed.totals["Cap Space"] || "n/a"}.`,
+  ];
+  dropped.forEach((row) => notes.push(`Skipped ${row.name}: Spotrac cap hit ${fmtMoney(Math.max(row.adjustedCap, row.totalCap))} exceeds the max player salary.`));
 
-  parsed.retained.forEach((row, idx) => {
-    adjustments.push({
-      id: `${teamSource.abbr}-retained-${idx + 1}`,
-      label: row.name,
-      category: "retainedSalary",
-      amount: row.adjustedCap,
-      notes: "Retained salary charge from Spotrac",
-    });
-  });
-
-  const activeAdjusted = parsed.active.reduce((sum, row) => sum + row.adjustedCap, 0);
-  const minorAdjusted = parsed.minor.reduce((sum, row) => sum + row.adjustedCap, 0);
-  const buyoutAdjusted = parsed.buyout.reduce((sum, row) => sum + row.adjustedCap, 0);
-  const retainedAdjusted = parsed.retained.reduce((sum, row) => sum + row.adjustedCap, 0);
-
-  return {
-    status: "complete",
-    items,
-    adjustments,
-    notes: [
-      `Imported from Spotrac ${SEASON} cap table on ${FETCH_DATE}.`,
-      `Source URL: https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${YEAR}`,
-      `Active adjusted=${activeAdjusted}; minor adjusted=${minorAdjusted}; buyout adjusted=${buyoutAdjusted}; retained adjusted=${retainedAdjusted}.`,
-      `Spotrac total allocations=${parsed.totals["Total Allocations"] || "n/a"}; cap space=${parsed.totals["Cap Space"] || "n/a"}.`,
-    ],
-  };
+  return { status: "complete", items, adjustments, notes };
 }
 
 // The "Imported from Spotrac ... on <date>" note changes every run, so it is
@@ -389,6 +425,7 @@ async function main() {
   data.capSheets = data.capSheets || {};
   data.capSheets[SEASON] = data.capSheets[SEASON] || {};
 
+  const maxSalary = 0.2 * (data.meta.caps?.[SEASON]?.ceiling || Infinity);
   const playerIndex = new Map();
   (data.players || []).forEach((player) => {
     playerIndex.set(`${normalizeName(player.name)}|${player.pos}`, player.id);
@@ -412,19 +449,23 @@ async function main() {
       // fully succeeds, so a failure leaves this team's prior cap sheet intact.
       const html = await fetchSpotracHtml(teamSource);
       const parsed = parseTeamPage(teamSource, html);
-      const sheet = buildCapSheet(teamSource, parsed, data, playerIndex);
+      const dropped = dropImpossibleCapHits(parsed, maxSalary, teamSource.abbr);
+      const sheet = buildCapSheet(teamSource, parsed, data, playerIndex, dropped);
       const prev = data.capSheets[SEASON][teamSource.abbr];
       if (!prev || !sameCapSheet(prev, sheet)) data.capSheets[SEASON][teamSource.abbr] = sheet;
-      report.push({
-        abbr: teamSource.abbr,
-        active: parsed.active.length,
-        minor: parsed.minor.length,
-        buyout: parsed.buyout.length,
-        retained: parsed.retained.length,
-      });
-      console.log(
-        `${teamSource.abbr}: active=${parsed.active.length}, minor=${parsed.minor.length}, buyout=${parsed.buyout.length}, retained=${parsed.retained.length}`
+      report.push({ abbr: teamSource.abbr });
+      console.log(`${teamSource.abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
+      parsed.unknown.forEach((section) =>
+        console.warn(`  ${teamSource.abbr}: ignored unrecognized section "${section.title}" (${section.count} rows, ${fmtMoney(section.sum)})`)
       );
+      const sheetTotal =
+        sheet.items.reduce((total, item) => total + item.capHit, 0) +
+        sheet.adjustments.reduce((total, adj) => total + adj.amount, 0);
+      const spotracTotal = parseMoneyText(parsed.totals["Total Allocations"]);
+      const skippedTotal = dropped.reduce((total, row) => total + row.adjustedCap, 0);
+      if (spotracTotal && Math.abs(sheetTotal + skippedTotal - spotracTotal) > 1000) {
+        console.warn(`  ${teamSource.abbr}: imported ${fmtMoney(sheetTotal)} but Spotrac reports ${fmtMoney(spotracTotal)} total allocations`);
+      }
     } catch (error) {
       failures.push({ abbr: teamSource.abbr, message: error.message });
       console.error(`!! ${teamSource.abbr} FAILED: ${error.message} (keeping last-known-good cap sheet)`);
