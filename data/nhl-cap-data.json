@@ -38845,145 +38845,191 @@
             "kind": "player",
             "playerId": "LAK_8",
             "category": "active",
-            "capHit": 11000000
+            "capHit": 11000000,
+            "baseSalary": 11000000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
             "playerId": "NYR_10",
             "category": "active",
-            "capHit": 11000000
+            "capHit": 11000000,
+            "baseSalary": 1000000,
+            "signingBonus": 11000000,
+            "clause": "NMC"
           },
           {
             "kind": "player",
             "playerId": "LAK_9",
             "category": "active",
-            "capHit": 10625000
+            "capHit": 10625000,
+            "baseSalary": 1000000,
+            "signingBonus": 11000000,
+            "clause": "NMC"
           },
           {
             "kind": "player",
             "playerId": "SR_73762",
             "category": "active",
-            "capHit": 7400000
+            "capHit": 7400000,
+            "baseSalary": 1400000,
+            "signingBonus": 6000000
           },
           {
             "kind": "player",
             "playerId": "LAK_13",
             "category": "active",
-            "capHit": 6250000
+            "capHit": 6250000,
+            "baseSalary": 4000000,
+            "signingBonus": 1500000
           },
           {
             "kind": "player",
             "playerId": "LAK_35",
             "category": "active",
-            "capHit": 5250000
+            "capHit": 5250000,
+            "baseSalary": 3750000
           },
           {
             "kind": "player",
             "playerId": "SR_10762",
             "category": "active",
-            "capHit": 4500000
+            "capHit": 4500000,
+            "baseSalary": 2000000,
+            "signingBonus": 2500000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
             "playerId": "SR_20913",
             "category": "active",
-            "capHit": 4200000
+            "capHit": 4200000,
+            "baseSalary": 4000000
           },
           {
             "kind": "player",
             "playerId": "SR_27068",
             "category": "active",
-            "capHit": 4125000
+            "capHit": 4125000,
+            "baseSalary": 4200000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
             "playerId": "SR_62944",
             "category": "active",
-            "capHit": 4100000
+            "capHit": 4100000,
+            "baseSalary": 4400000
           },
           {
             "kind": "player",
             "playerId": "SR_9553",
             "category": "active",
-            "capHit": 4000000
+            "capHit": 4000000,
+            "baseSalary": 1500000,
+            "signingBonus": 2500000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
             "playerId": "SR_12016",
             "category": "active",
-            "capHit": 3850000
+            "capHit": 3850000,
+            "baseSalary": 2000000,
+            "signingBonus": 1500000
           },
           {
             "kind": "player",
             "playerId": "SR_12229",
             "category": "active",
-            "capHit": 3600000
+            "capHit": 3600000,
+            "baseSalary": 1600000,
+            "signingBonus": 2000000,
+            "clause": "NTC"
           },
           {
             "kind": "player",
             "playerId": "PHI_22",
             "category": "active",
-            "capHit": 3500000
+            "capHit": 3500000,
+            "baseSalary": 2500000,
+            "signingBonus": 1000000,
+            "clause": "NTC"
           },
           {
             "kind": "player",
             "playerId": "SR_10738",
             "category": "active",
-            "capHit": 2500000
+            "capHit": 2500000,
+            "baseSalary": 2500000
           },
           {
             "kind": "player",
             "playerId": "SR_13213",
             "category": "active",
-            "capHit": 2250000
+            "capHit": 2250000,
+            "baseSalary": 2250000
           },
           {
             "kind": "player",
             "playerId": "DET_56",
             "category": "active",
-            "capHit": 1000000
+            "capHit": 1000000,
+            "baseSalary": 1000000
           },
           {
             "kind": "player",
             "playerId": "SR_1403",
             "category": "active",
-            "capHit": 1000000
+            "capHit": 1000000,
+            "baseSalary": 1000000
           },
           {
             "kind": "player",
             "playerId": "SR_6851",
             "category": "active",
-            "capHit": 1000000
+            "capHit": 1000000,
+            "baseSalary": 1000000,
+            "incentives": 5500000,
+            "clause": "NTC"
           },
           {
             "kind": "player",
             "playerId": "SR_73815",
             "category": "active",
-            "capHit": 875000
+            "capHit": 875000,
+            "baseSalary": 850000
           },
           {
             "kind": "player",
             "playerId": "SR_31812",
             "category": "active",
-            "capHit": 850000
+            "capHit": 850000,
+            "baseSalary": 850000
           },
           {
             "kind": "player",
             "playerId": "SR_31629",
             "category": "active",
-            "capHit": 850000
+            "capHit": 850000,
+            "baseSalary": 850000
           },
           {
             "kind": "player",
             "playerId": "SR_15583",
             "category": "ir",
-            "capHit": 7875000
+            "capHit": 7875000,
+            "baseSalary": 6500000,
+            "signingBonus": 2000000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
             "playerId": "SR_99355",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 922500,
+            "signingBonus": 102500,
             "notes": []
           },
           {
@@ -38991,6 +39037,8 @@
             "playerId": "SR_108588",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 922500,
+            "signingBonus": 102500,
             "notes": []
           },
           {
@@ -38998,6 +39046,8 @@
             "playerId": "SR_84610",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 922500,
+            "signingBonus": 102500,
             "notes": []
           },
           {
@@ -39005,6 +39055,8 @@
             "playerId": "SR_99408",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 877500,
+            "signingBonus": 97500,
             "notes": []
           },
           {
@@ -39012,6 +39064,9 @@
             "playerId": "SR_94313",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 87500,
+            "incentives": 12500,
             "notes": []
           },
           {
@@ -39019,6 +39074,8 @@
             "playerId": "SR_99477",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 85000,
             "notes": []
           },
           {
@@ -39026,6 +39083,9 @@
             "playerId": "SR_78458",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 87500,
+            "incentives": 12500,
             "notes": []
           },
           {
@@ -39033,6 +39093,9 @@
             "playerId": "SR_106953",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 102500,
+            "incentives": 72500,
             "notes": []
           },
           {
@@ -39040,6 +39103,9 @@
             "playerId": "SR_78413",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 92500,
+            "incentives": 57500,
             "notes": []
           },
           {
@@ -39047,6 +39113,8 @@
             "playerId": "SR_73840",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 92500,
             "notes": []
           },
           {
@@ -39054,6 +39122,9 @@
             "playerId": "SR_78480",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 92500,
+            "incentives": 57500,
             "notes": []
           },
           {
@@ -39061,6 +39132,8 @@
             "playerId": "SR_94163",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 85000,
             "notes": []
           },
           {
@@ -39068,6 +39141,8 @@
             "playerId": "SR_78525",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
+            "signingBonus": 77500,
             "notes": []
           },
           {
@@ -39075,6 +39150,7 @@
             "playerId": "SR_84546",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39082,6 +39158,7 @@
             "playerId": "SR_84570",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39089,6 +39166,7 @@
             "playerId": "SR_78426",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39096,6 +39174,7 @@
             "playerId": "SR_21100",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39103,6 +39182,7 @@
             "playerId": "SR_76211",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39110,6 +39190,7 @@
             "playerId": "SR_62989",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39117,6 +39198,7 @@
             "playerId": "SR_79616",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39124,6 +39206,7 @@
             "playerId": "SR_15892",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39131,6 +39214,7 @@
             "playerId": "SR_27134",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39138,6 +39222,7 @@
             "playerId": "SR_63051",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39145,6 +39230,7 @@
             "playerId": "SR_27114",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39152,6 +39238,7 @@
             "playerId": "SR_73798",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 850000,
             "notes": []
           },
           {
@@ -39159,6 +39246,7 @@
             "playerId": "SR_31691",
             "category": "minors",
             "capHit": 0,
+            "baseSalary": 800000,
             "notes": []
           }
         ],
