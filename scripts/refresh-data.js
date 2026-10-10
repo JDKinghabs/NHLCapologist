@@ -213,7 +213,32 @@ function extractTbody(tableHtml) {
   return match ? match[1] : "";
 }
 
+// Spotrac's player tables identify each column by a stable <th id>.
+const COLUMN_IDS = {
+  pos: "position1_abbreviation",
+  totalCap: "cap_total",
+  adjustedCap: "cap_total2",
+  baseSalary: "cap_base",
+  signingBonus: "cap_signing",
+  incentives: "cap_incentive_likely",
+};
+
+function parseColumnIds(tableHtml) {
+  const thead = (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i) || [])[1] || "";
+  return Array.from(thead.matchAll(/<th\b[^>]*?\bid="([^"]*)"/gi)).map((match) => match[1]);
+}
+
+// A cell's value is its data-sort attribute when present (most tables),
+// otherwise its text (the Minor table has no data-sort attributes).
+function parseCells(rowHtml) {
+  return Array.from(rowHtml.matchAll(/<td\b([^>]*)>([\s\S]*?)<\/td>/gi)).map(([, attrs, inner]) => {
+    const sort = attrs.match(/data-sort="([^"]*)"/i);
+    return sort ? decodeHtml(sort[1]) : stripTags(inner);
+  });
+}
+
 function parsePlayerRows(tableHtml) {
+  const columnIds = parseColumnIds(tableHtml);
   const tbody = extractTbody(tableHtml);
   const rows = [];
   const rowPattern = /<tr class="[^"]*">([\s\S]*?)<\/tr>/gi;
@@ -223,30 +248,25 @@ function parsePlayerRows(tableHtml) {
     const rowHtml = rowMatch[1];
     const playerMatch = rowHtml.match(/player\/_\/id\/(\d+)\/[^"]+" class="link[^"]*"[^>]*>([^<]+)<\/a>/i);
     if (!playerMatch) continue;
-
-    let pos = "";
-    let totalCap = 0;
-    let adjustedCap = 0;
-    const dataSorts = Array.from(rowHtml.matchAll(/<td[^>]*data-sort="([^"]*)"[^>]*>/gi)).map((match) => match[1]);
-
-    if (dataSorts.length >= 3) {
-      pos = decodeHtml(dataSorts[0]);
-      totalCap = safeNum(dataSorts[1]);
-      adjustedCap = safeNum(dataSorts[2]);
-    } else {
-      const tdMatches = Array.from(rowHtml.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)).map((match) => stripTags(match[1]));
-      if (tdMatches.length < 4) continue;
-      pos = tdMatches[1];
-      totalCap = parseMoneyText(tdMatches[2]);
-      adjustedCap = parseMoneyText(tdMatches[3]);
+    if (![COLUMN_IDS.pos, COLUMN_IDS.adjustedCap].every((id) => columnIds.includes(id))) {
+      throw new Error(`Unrecognized table columns: ${columnIds.join(", ") || "(no <thead>)"}`);
     }
+
+    const cells = parseCells(rowHtml);
+    const cell = (key) => cells[columnIds.indexOf(COLUMN_IDS[key])] ?? "";
+    // Contract clauses appear as text in the name cell's tooltip ("NTC:", "M-NTC", ...).
+    const clause = (rowHtml.match(/\b(M-NMC|M-NTC|NMC|NTC)\b/) || [])[1] || null;
 
     rows.push({
       spotracId: playerMatch[1],
       name: decodeHtml(playerMatch[2]),
-      pos,
-      totalCap,
-      adjustedCap,
+      pos: cell("pos"),
+      totalCap: parseMoneyText(cell("totalCap")),
+      adjustedCap: parseMoneyText(cell("adjustedCap")),
+      baseSalary: parseMoneyText(cell("baseSalary")),
+      signingBonus: parseMoneyText(cell("signingBonus")),
+      incentives: parseMoneyText(cell("incentives")),
+      clause,
       buried: rowHtml.includes("Buried"),
       waived: rowHtml.includes("Waived"),
     });
@@ -349,20 +369,21 @@ function fmtMoney(amount) {
   return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
 
+// Players are matched by Spotrac ID; older hand-entered records (TOR_34
+// style IDs) by name and position. Spotrac is the source for positions.
 function ensurePlayer(data, playerIndex, row) {
+  const spotracId = `SR_${row.spotracId}`;
   const key = `${normalizeName(row.name)}|${row.pos}`;
-  let playerId = playerIndex.get(key);
-  if (playerId) return playerId;
+  let player = playerIndex.byId.get(spotracId) || playerIndex.byId.get(playerIndex.byName.get(key));
 
-  playerId = `SR_${row.spotracId}`;
-  data.players.push({
-    id: playerId,
-    name: row.name,
-    pos: row.pos,
-    age: 0,
-  });
-  playerIndex.set(key, playerId);
-  return playerId;
+  if (!player) {
+    player = { id: spotracId, name: row.name, pos: row.pos, age: 0 };
+    data.players.push(player);
+    playerIndex.byId.set(player.id, player);
+  }
+  if (row.pos && player.pos !== row.pos) player.pos = row.pos;
+  playerIndex.byName.set(key, player.id);
+  return player.id;
 }
 
 function ensureSeasonContract(data, playerId, teamAbbr, row) {
@@ -408,6 +429,10 @@ function buildCapSheet(teamSource, parsed, data, playerIndex, dropped) {
         playerId,
         category,
         capHit: row.adjustedCap,
+        ...(row.baseSalary ? { baseSalary: row.baseSalary } : {}),
+        ...(row.signingBonus ? { signingBonus: row.signingBonus } : {}),
+        ...(row.incentives ? { incentives: row.incentives } : {}),
+        ...(row.clause ? { clause: row.clause } : {}),
         ...(category === "minors" ? { notes: row.buried ? ["Buried"] : [] } : {}),
       });
     });
@@ -478,10 +503,16 @@ async function main() {
   data.capSheets[SEASON] = data.capSheets[SEASON] || {};
 
   const maxSalary = 0.2 * (data.meta.caps?.[SEASON]?.ceiling || Infinity);
-  const playerIndex = new Map();
+  // An older import could add a second record under the same Spotrac ID;
+  // keep the one with a real position.
+  const byId = new Map();
   (data.players || []).forEach((player) => {
-    playerIndex.set(`${normalizeName(player.name)}|${player.pos}`, player.id);
+    const prev = byId.get(player.id);
+    if (!prev || /^\d+$/.test(prev.pos)) byId.set(player.id, player);
   });
+  data.players = [...byId.values()];
+  const playerIndex = { byId, byName: new Map() };
+  data.players.forEach((player) => playerIndex.byName.set(`${normalizeName(player.name)}|${player.pos}`, player.id));
 
   const sources = TARGET_ABBR
     ? TEAM_SOURCES.filter((teamSource) => teamSource.abbr === TARGET_ABBR)
@@ -542,7 +573,19 @@ async function main() {
   console.log(`Players: ${data.players.length} | Contracts: ${data.contracts.length}`);
 }
 
-main().catch((error) => {
-  console.error(error.message);
-  process.exit(1);
-});
+export {
+  capTotalsCharges,
+  checkAgainstSpotracTotals,
+  classifySection,
+  dropImpossibleCapHits,
+  parsePlayerRows,
+  parseTeamPage,
+  sameCapSheet,
+};
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error.message);
+    process.exit(1);
+  });
+}
