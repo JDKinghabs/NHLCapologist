@@ -1327,8 +1327,7 @@
     {
       "id": "SR_94203",
       "name": "Matvei Shuravin",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_78531",
@@ -1615,8 +1614,7 @@
     {
       "id": "SR_94208",
       "name": "Owen Protz",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_25954",
@@ -1891,8 +1889,7 @@
     {
       "id": "SR_94223",
       "name": "Blake Montgomery",
-      "pos": "LW",
-      "age": 0
+      "pos": "LW"
     },
     {
       "id": "SR_99449",
@@ -1903,8 +1900,7 @@
     {
       "id": "SR_94145",
       "name": "Gabriel Eliasson",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_94210",
@@ -2185,8 +2181,7 @@
     {
       "id": "SR_94349",
       "name": "Noah Steen",
-      "pos": "LW",
-      "age": 0
+      "pos": "LW"
     },
     {
       "id": "SR_99405",
@@ -2533,8 +2528,7 @@
     {
       "id": "SR_94300",
       "name": "Miroslav Holinka",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_84677",
@@ -2779,8 +2773,7 @@
     {
       "id": "SR_94175",
       "name": "Noel Fransén",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_99411",
@@ -3331,8 +3324,7 @@
     {
       "id": "SR_94112",
       "name": "Anton Silayev",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_19957",
@@ -3361,8 +3353,7 @@
     {
       "id": "SR_94320",
       "name": "Matyas Melovsky",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_90138",
@@ -3613,8 +3604,7 @@
     {
       "id": "SR_94122",
       "name": "Cole Eiserman",
-      "pos": "LW",
-      "age": 0
+      "pos": "LW"
     },
     {
       "id": "SR_108582",
@@ -3931,8 +3921,7 @@
     {
       "id": "SR_94308",
       "name": "Nathan Aspinall",
-      "pos": "LW",
-      "age": 0
+      "pos": "LW"
     },
     {
       "id": "SR_78486",
@@ -4165,8 +4154,7 @@
     {
       "id": "SR_94157",
       "name": "Jack Berglund",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_106743",
@@ -4183,14 +4171,12 @@
     {
       "id": "SR_94322",
       "name": "Ilya Pautov",
-      "pos": "RW",
-      "age": 0
+      "pos": "RW"
     },
     {
       "id": "SR_94297",
       "name": "Noah Powell",
-      "pos": "RW",
-      "age": 0
+      "pos": "RW"
     },
     {
       "id": "SR_84595",
@@ -4693,8 +4679,7 @@
     {
       "id": "SR_94149",
       "name": "Cole Hutson",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_84496",
@@ -4747,8 +4732,7 @@
     {
       "id": "SR_94327",
       "name": "Petr Sikora",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_97608",
@@ -5041,8 +5025,7 @@
     {
       "id": "SR_94120",
       "name": "Sacha Boisvert",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_101276",
@@ -5851,8 +5834,7 @@
     {
       "id": "SR_94291",
       "name": "Chase Wutzke",
-      "pos": "G",
-      "age": 0
+      "pos": "G"
     },
     {
       "id": "SR_73810",
@@ -6091,8 +6073,7 @@
     {
       "id": "SR_94183",
       "name": "Viggo Gustafsson",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_99515",
@@ -6355,8 +6336,7 @@
     {
       "id": "SR_94154",
       "name": "Colin Ralph",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_78430",
@@ -6931,8 +6911,7 @@
     {
       "id": "SR_94204",
       "name": "Gregor Biber",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_99395",
@@ -6955,8 +6934,7 @@
     {
       "id": "SR_94209",
       "name": "Gabe Smith",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_78346",
@@ -7207,8 +7185,7 @@
     {
       "id": "SR_109963",
       "name": "Cruz Lucius",
-      "pos": "RW",
-      "age": 0
+      "pos": "RW"
     },
     {
       "id": "SR_12196",
@@ -7231,8 +7208,7 @@
     {
       "id": "SR_94197",
       "name": "Herman Träff",
-      "pos": "RW",
-      "age": 0
+      "pos": "RW"
     },
     {
       "id": "SR_94141",
@@ -7489,8 +7465,7 @@
     {
       "id": "SR_94190",
       "name": "Kirill Zarubin",
-      "pos": "G",
-      "age": 0
+      "pos": "G"
     },
     {
       "id": "SR_84700",
@@ -7759,8 +7734,7 @@
     {
       "id": "SR_94346",
       "name": "William Nicholl",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_62999",
@@ -8347,8 +8321,7 @@
     {
       "id": "SR_94188",
       "name": "Carson Wetsch",
-      "pos": "RW",
-      "age": 0
+      "pos": "RW"
     },
     {
       "id": "SR_94159",
@@ -8563,8 +8536,7 @@
     {
       "id": "SR_94179",
       "name": "Alexis Bernier",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_99328",
@@ -8593,8 +8565,7 @@
     {
       "id": "SR_94146",
       "name": "Julius Miettinen",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_94169",
@@ -8869,8 +8840,7 @@
     {
       "id": "SR_94231",
       "name": "Riley Patterson",
-      "pos": "C",
-      "age": 0
+      "pos": "C"
     },
     {
       "id": "SR_99528",
@@ -9139,8 +9109,7 @@
     {
       "id": "SR_94189",
       "name": "Pavel Moysevich",
-      "pos": "G",
-      "age": 0
+      "pos": "G"
     },
     {
       "id": "SR_99539",
@@ -9181,8 +9150,7 @@
     {
       "id": "SR_99930",
       "name": "Viliam Kmec",
-      "pos": "D",
-      "age": 0
+      "pos": "D"
     },
     {
       "id": "SR_78389",
@@ -23691,20 +23659,10 @@
       "playerId": "SR_15258",
       "team": "WPG",
       "startSeason": "2026-27",
-      "years": 1,
-      "aav": 0,
-      "capHits": {
-        "2026-27": 0
-      },
-      "source": "Spotrac"
-    },
-    {
-      "playerId": "SR_15258",
-      "team": "WPG",
-      "startSeason": "2027-28",
-      "years": 4,
+      "years": 5,
       "aav": 8500000,
       "capHits": {
+        "2026-27": 0,
         "2027-28": 8500000,
         "2028-29": 8500000,
         "2029-30": 8500000,
