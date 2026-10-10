@@ -29,7 +29,9 @@ const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 const TARGET_ABBR = (process.argv[2] || "").toUpperCase();
 const DEBUG_ABBR = (process.env.SPOTRAC_DEBUG || "").toUpperCase();
-const DEBUG_PLAYER = process.env.SPOTRAC_DEBUG_PLAYER || "";
+// One or more names separated by "|".
+const DEBUG_PLAYERS = (process.env.SPOTRAC_DEBUG_PLAYER || "").split("|").map((name) => name.trim()).filter(Boolean);
+const namesDebugPlayer = (row) => DEBUG_PLAYERS.some((name) => row.includes(name));
 const DRY_RUN = process.env.REFRESH_DRY_RUN === "true";
 const DEBUG_URLS = (process.env.SPOTRAC_DEBUG_URL || "").split(",").map((url) => url.trim()).filter(Boolean);
 
@@ -204,9 +206,7 @@ function dumpMarkup(html, abbr) {
     console.log(`[debug ${abbr}] SECTION ${squash(stripTags(header))} | rows=${rows.length} | table${squash(tableAttrs)}`);
     console.log(`[debug ${abbr}] THEAD ${squash(thead)}`);
     rows.slice(0, 2).forEach((row) => console.log(`[debug ${abbr}] ROW ${squash(row)}`));
-    if (DEBUG_PLAYER) {
-      rows.filter((row) => row.includes(DEBUG_PLAYER)).forEach((row) => console.log(`[debug ${abbr}] MATCH ${squash(row)}`));
-    }
+    rows.filter(namesDebugPlayer).forEach((row) => console.log(`[debug ${abbr}] MATCH ${squash(row)}`));
   }
 }
 
@@ -229,9 +229,7 @@ async function dumpPages(urls) {
           rows.forEach((row) => console.log(`[debug-url] SUMMARY ${squash(stripTags(row.replace(/<\/td>/gi, " | </td>")))}`));
         } else {
           rows.slice(0, 2).forEach((row) => console.log(`[debug-url] ROW ${squash(row)}`));
-          if (DEBUG_PLAYER) {
-            rows.filter((row) => row.includes(DEBUG_PLAYER)).forEach((row) => console.log(`[debug-url] MATCH ${row.replace(/\s+/g, " ").slice(0, 6000)}`));
-          }
+          rows.filter(namesDebugPlayer).forEach((row) => console.log(`[debug-url] MATCH ${row.replace(/\s+/g, " ").slice(0, 6000)}`));
         }
       }
     } catch (error) {
