@@ -321,6 +321,23 @@ function capTotalsCharges(totals) {
   return charges;
 }
 
+// Refuses a page whose tables don't add up to Spotrac's own total (e.g. an
+// alternate page layout where no rows parse), so the team keeps its
+// last-known-good sheet instead of being overwritten with wrong numbers.
+function checkAgainstSpotracTotals(parsed, dropped) {
+  const sum = (rows) => rows.reduce((total, row) => total + row.adjustedCap, 0);
+  const imported =
+    [...PLAYER_KINDS, ...Object.keys(ADJUSTMENT_KINDS)].reduce((total, kind) => total + sum(parsed[kind]), 0) +
+    capTotalsCharges(parsed.totals).reduce((total, charge) => total + charge.amount, 0);
+  // Spotrac's total includes any skipped rows but not the cap-maximum cut the sheet records as a charge.
+  const expected =
+    parseMoneyText(parsed.totals["Total Allocations"]) - parseMoneyText(parsed.totals["Adjustment"]) - sum(dropped);
+  if (!parsed.active.length || Math.abs(imported - expected) > 1000) {
+    const totals = Object.entries(parsed.totals).map(([label, value]) => `${label}=${value}`).join("; ");
+    throw new Error(`parsed tables total ${fmtMoney(imported)} but Spotrac reports ${fmtMoney(expected)} [Cap Totals: ${totals}]`);
+  }
+}
+
 function fmtMoney(amount) {
   return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
@@ -476,26 +493,16 @@ async function main() {
       // fully succeeds, so a failure leaves this team's prior cap sheet intact.
       const html = await fetchSpotracHtml(teamSource);
       const parsed = parseTeamPage(teamSource, html);
-      const dropped = dropImpossibleCapHits(parsed, maxSalary, teamSource.abbr);
-      const sheet = buildCapSheet(teamSource, parsed, data, playerIndex, dropped);
-      const prev = data.capSheets[SEASON][teamSource.abbr];
-      if (!prev || !sameCapSheet(prev, sheet)) data.capSheets[SEASON][teamSource.abbr] = sheet;
-      report.push({ abbr: teamSource.abbr });
       console.log(`${teamSource.abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
       parsed.unknown.forEach((section) =>
         console.warn(`  ${teamSource.abbr}: ignored unrecognized section "${section.title}" (${section.count} rows, ${fmtMoney(section.sum)})`)
       );
-      const sheetTotal =
-        sheet.items.reduce((total, item) => total + item.capHit, 0) +
-        sheet.adjustments.reduce((total, adj) => total + adj.amount, 0);
-      // Spotrac's total excludes the cap-maximum cut that the sheet records as a charge.
-      const spotracTotal =
-        parseMoneyText(parsed.totals["Total Allocations"]) - parseMoneyText(parsed.totals["Adjustment"]);
-      const skippedTotal = dropped.reduce((total, row) => total + row.adjustedCap, 0);
-      if (spotracTotal && Math.abs(sheetTotal + skippedTotal - spotracTotal) > 1000) {
-        console.warn(`  ${teamSource.abbr}: imported ${fmtMoney(sheetTotal)} but Spotrac reports ${fmtMoney(spotracTotal)} total allocations`);
-        console.warn(`    Cap Totals: ${Object.entries(parsed.totals).map(([label, value]) => `${label}=${value}`).join("; ")}`);
-      }
+      const dropped = dropImpossibleCapHits(parsed, maxSalary, teamSource.abbr);
+      checkAgainstSpotracTotals(parsed, dropped);
+      const sheet = buildCapSheet(teamSource, parsed, data, playerIndex, dropped);
+      const prev = data.capSheets[SEASON][teamSource.abbr];
+      if (!prev || !sameCapSheet(prev, sheet)) data.capSheets[SEASON][teamSource.abbr] = sheet;
+      report.push({ abbr: teamSource.abbr });
     } catch (error) {
       failures.push({ abbr: teamSource.abbr, message: error.message });
       console.error(`!! ${teamSource.abbr} FAILED: ${error.message} (keeping last-known-good cap sheet)`);

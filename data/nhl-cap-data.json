@@ -61782,15 +61782,7 @@
             "notes": []
           }
         ],
-        "adjustments": [
-          {
-            "id": "FLA-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 150000,
-            "notes": "From Spotrac cap totals"
-          }
-        ],
+        "adjustments": [],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/florida-panthers/cap/_/year/2026",
@@ -62099,13 +62091,6 @@
             "category": "retainedSalary",
             "amount": 3250000,
             "notes": "Retained salary charge from Spotrac"
-          },
-          {
-            "id": "MTL-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 1934410,
-            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -64093,15 +64078,7 @@
             "notes": []
           }
         ],
-        "adjustments": [
-          {
-            "id": "NJD-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 1250000,
-            "notes": "From Spotrac cap totals"
-          }
-        ],
+        "adjustments": [],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/new-jersey-devils/cap/_/year/2026",
@@ -64429,13 +64406,6 @@
             "category": "buyout",
             "amount": 0,
             "notes": "Waived / buyout charge from Spotrac"
-          },
-          {
-            "id": "NYI-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 3500000,
-            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -65109,12 +65079,349 @@
       },
       "PIT": {
         "status": "complete",
-        "items": [],
-        "adjustments": [],
+        "items": [
+          {
+            "kind": "player",
+            "playerId": "SR_6396",
+            "category": "active",
+            "capHit": 10000000
+          },
+          {
+            "kind": "player",
+            "playerId": "PIT_87",
+            "category": "active",
+            "capHit": 8700000
+          },
+          {
+            "kind": "player",
+            "playerId": "CBJ_21",
+            "category": "active",
+            "capHit": 6250000
+          },
+          {
+            "kind": "player",
+            "playerId": "PIT_58",
+            "category": "active",
+            "capHit": 6100000
+          },
+          {
+            "kind": "player",
+            "playerId": "PIT_71",
+            "category": "active",
+            "capHit": 5500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_20332",
+            "category": "active",
+            "capHit": 5000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_78104",
+            "category": "active",
+            "capHit": 5000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_10896",
+            "category": "active",
+            "capHit": 5000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15562",
+            "category": "active",
+            "capHit": 4000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_73807",
+            "category": "active",
+            "capHit": 4000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_47425",
+            "category": "active",
+            "capHit": 3500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_31677",
+            "category": "active",
+            "capHit": 3250000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_31665",
+            "category": "active",
+            "capHit": 3250000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_31780",
+            "category": "active",
+            "capHit": 2800000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_27162",
+            "category": "active",
+            "capHit": 2250000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_28975",
+            "category": "active",
+            "capHit": 2250000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_27202",
+            "category": "active",
+            "capHit": 1525000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_76676",
+            "category": "active",
+            "capHit": 1500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_62879",
+            "category": "active",
+            "capHit": 1300000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_31783",
+            "category": "active",
+            "capHit": 1125000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_99331",
+            "category": "active",
+            "capHit": 986250
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_78428",
+            "category": "active",
+            "capHit": 936110
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_63066",
+            "category": "active",
+            "capHit": 850000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_16137",
+            "category": "ir",
+            "capHit": 5125000
+          },
+          {
+            "kind": "player",
+            "playerId": "PIT_73",
+            "category": "ir",
+            "capHit": 4500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_89371",
+            "category": "ir",
+            "capHit": 1500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_27129",
+            "category": "minors",
+            "capHit": 21905,
+            "notes": [
+              "Buried"
+            ]
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_78324",
+            "category": "minors",
+            "capHit": 4897,
+            "notes": [
+              "Buried"
+            ]
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_99346",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_108624",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_99436",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_107086",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94199",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94217",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_99387",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94373",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_84634",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_73814",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_74009",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_108827",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94150",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_97585",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_18907",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_78331",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_62912",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_76117",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_70775",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_90245",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94152",
+            "category": "minors",
+            "capHit": 0,
+            "notes": []
+          }
+        ],
+        "adjustments": [
+          {
+            "id": "PIT-buyout-1",
+            "label": "Filip Hallander",
+            "category": "buyout",
+            "amount": 0,
+            "notes": "Waived / buyout charge from Spotrac"
+          },
+          {
+            "id": "PIT-retained-1",
+            "label": "Parker Wotherspoon",
+            "category": "retainedSalary",
+            "amount": 500000,
+            "notes": "Retained salary charge from Spotrac"
+          }
+        ],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/pittsburgh-penguins/cap/_/year/2026",
-          "Sections: Active Roster=0; Injured List=0; Buyout=0; Retained=0; Minor=0.",
+          "Sections: Active Roster Cap=85072360; Injured List Cap=11125000; Buyout Cap=0; Retained Cap=500000; Minor=26802.",
           "Spotrac total allocations=$96,724,162; cap space=$7,275,838."
         ]
       },
@@ -65427,15 +65734,7 @@
             "notes": []
           }
         ],
-        "adjustments": [
-          {
-            "id": "WSH-totals-1",
-            "label": "Performance Bonus Cushion Charge",
-            "category": "bonusOverage",
-            "amount": 552500,
-            "notes": "From Spotrac cap totals"
-          }
-        ],
+        "adjustments": [],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/cap/_/year/2026",
@@ -65750,13 +66049,6 @@
             "category": "retainedSalary",
             "amount": 2500000,
             "notes": "Retained salary charge from Spotrac"
-          },
-          {
-            "id": "CHI-totals-1",
-            "label": "Performance Bonus Cushion Charge",
-            "category": "bonusOverage",
-            "amount": 4780000,
-            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -66053,15 +66345,7 @@
             "notes": []
           }
         ],
-        "adjustments": [
-          {
-            "id": "COL-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 2291841,
-            "notes": "From Spotrac cap totals"
-          }
-        ],
+        "adjustments": [],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/colorado-avalanche/cap/_/year/2026",
@@ -66362,15 +66646,7 @@
             "notes": []
           }
         ],
-        "adjustments": [
-          {
-            "id": "DAL-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 2080000,
-            "notes": "From Spotrac cap totals"
-          }
-        ],
+        "adjustments": [],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/cap/_/year/2026",
@@ -68920,13 +69196,6 @@
             "category": "buyout",
             "amount": 0,
             "notes": "Waived / buyout charge from Spotrac"
-          },
-          {
-            "id": "EDM-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 250000,
-            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -69581,20 +69850,6 @@
             "category": "retainedSalary",
             "amount": 1387500,
             "notes": "Retained salary charge from Spotrac"
-          },
-          {
-            "id": "SJS-totals-1",
-            "label": "Salary cap maximum adjustment",
-            "category": "other",
-            "amount": 918694,
-            "notes": "From Spotrac cap totals"
-          },
-          {
-            "id": "SJS-totals-2",
-            "label": "Performance Bonus Cushion Charge",
-            "category": "bonusOverage",
-            "amount": 6430000,
-            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
