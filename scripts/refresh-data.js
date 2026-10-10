@@ -227,7 +227,12 @@ async function dumpPages(urls) {
         const thead = (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i) || [])[1] || "";
         const rows = (tableHtml.match(/<tbody>([\s\S]*?)<\/tbody>/i)?.[1] || tableHtml).match(/<tr[\s\S]*?<\/tr>/gi) || [];
         console.log(`[debug-url] TABLE${squash(attrs)} rows=${rows.length} | THEAD ${squash(stripTags(thead.replace(/<\/th>/gi, " | </th>")))}`);
-        rows.slice(0, 2).forEach((row) => console.log(`[debug-url] ROW ${squash(row)}`));
+        // Summary tables print every row as text; others print their first rows' markup.
+        if (/summary/i.test(attrs)) {
+          rows.forEach((row) => console.log(`[debug-url] SUMMARY ${squash(stripTags(row.replace(/<\/td>/gi, " | </td>")))}`));
+        } else {
+          rows.slice(0, 2).forEach((row) => console.log(`[debug-url] ROW ${squash(row)}`));
+        }
       }
     } catch (error) {
       console.log(`[debug-url ${url}] ${error.message}`);
