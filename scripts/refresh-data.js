@@ -7,11 +7,13 @@
 //   - writes atomically (temp file + rename) so a partial/failed scrape can
 //     never corrupt the existing ~1 MB JSON; teams that fail keep their
 //     last-known-good cap sheet.
+//   - leaves the JSON untouched when Spotrac reports nothing new, so a run
+//     never produces a commit that only bumps date stamps.
 //
 // Usage:
-//   node scripts/refresh-data.js            # all 32 teams
+//   node scripts/refresh-data.js            # all 32 teams, current season
 //   node scripts/refresh-data.js TOR        # single team
-//   SEASON=2026-27 node scripts/refresh-data.js
+//   SEASON=2025-26 node scripts/refresh-data.js   # a specific season
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -19,7 +21,13 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.resolve(__dirname, "..", "data", "nhl-cap-data.json");
 
-const SEASON = process.env.SEASON || "2025-26";
+// The NHL league year (and Spotrac's cap pages) rolls over on July 1.
+function currentSeason(date = new Date()) {
+  const year = date.getUTCMonth() >= 6 ? date.getUTCFullYear() : date.getUTCFullYear() - 1;
+  return `${year}-${String((year + 1) % 100).padStart(2, "0")}`;
+}
+
+const SEASON = process.env.SEASON || currentSeason();
 const YEAR = Number(process.env.YEAR) || Number(SEASON.slice(0, 4));
 const FETCH_DATE = new Date().toISOString().slice(0, 10);
 const USER_AGENT =
@@ -356,6 +364,14 @@ function buildCapSheet(teamSource, parsed, data, playerIndex) {
   };
 }
 
+// The "Imported from Spotrac ... on <date>" note changes every run, so it is
+// ignored when deciding whether a team's cap sheet actually changed.
+function sameCapSheet(a, b) {
+  const strip = (sheet) =>
+    JSON.stringify({ ...sheet, notes: (sheet.notes || []).filter((note) => !note.startsWith("Imported from Spotrac")) });
+  return strip(a) === strip(b);
+}
+
 function writeDataAtomic(data) {
   const tmpPath = `${DATA_PATH}.tmp`;
   fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf8");
@@ -364,9 +380,14 @@ function writeDataAtomic(data) {
 
 async function main() {
   const data = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
+  const before = JSON.stringify(data);
+  data.meta = data.meta || {};
+  const seasons = data.meta.seasons || [];
+  if (!seasons.includes(SEASON)) {
+    throw new Error(`Season ${SEASON} is not in meta.seasons (${seasons.join(", ")}) — add it before refreshing.`);
+  }
   data.capSheets = data.capSheets || {};
   data.capSheets[SEASON] = data.capSheets[SEASON] || {};
-  data.meta = data.meta || {};
 
   const playerIndex = new Map();
   (data.players || []).forEach((player) => {
@@ -391,7 +412,9 @@ async function main() {
       // fully succeeds, so a failure leaves this team's prior cap sheet intact.
       const html = await fetchSpotracHtml(teamSource);
       const parsed = parseTeamPage(teamSource, html);
-      data.capSheets[SEASON][teamSource.abbr] = buildCapSheet(teamSource, parsed, data, playerIndex);
+      const sheet = buildCapSheet(teamSource, parsed, data, playerIndex);
+      const prev = data.capSheets[SEASON][teamSource.abbr];
+      if (!prev || !sameCapSheet(prev, sheet)) data.capSheets[SEASON][teamSource.abbr] = sheet;
       report.push({
         abbr: teamSource.abbr,
         active: parsed.active.length,
@@ -411,6 +434,17 @@ async function main() {
 
   if (report.length === 0) {
     throw new Error(`All ${sources.length} team(s) failed to refresh — leaving ${path.basename(DATA_PATH)} untouched.`);
+  }
+
+  // Once the new league year's sheets are in, make it the app's default view.
+  if (SEASON === currentSeason() && seasons.indexOf(SEASON) > seasons.indexOf(data.meta.defaultSeason)) {
+    data.meta.defaultSeason = SEASON;
+  }
+
+  if (JSON.stringify(data) === before) {
+    console.log(`\nNo changes from Spotrac for ${SEASON} — leaving ${path.basename(DATA_PATH)} untouched.`);
+    if (failures.length) console.log(`Failures (${failures.length}): ${failures.map((f) => f.abbr).join(", ")}`);
+    return;
   }
 
   data.meta.updated = FETCH_DATE;

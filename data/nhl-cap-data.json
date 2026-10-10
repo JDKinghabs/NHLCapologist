@@ -1,7 +1,7 @@
 {
   "meta": {
     "updated": "2026-10-09",
-    "defaultSeason": "2025-26",
+    "defaultSeason": "2026-27",
     "seasons": [
       "2024-25",
       "2025-26",
@@ -20,37 +20,37 @@
       },
       "2025-26": {
         "ceiling": 95500000,
-        "floor": 70000000,
+        "floor": 70600000,
         "projected": false
       },
       "2026-27": {
-        "ceiling": 99000000,
-        "floor": 72500000,
-        "projected": true
+        "ceiling": 104000000,
+        "floor": 76900000,
+        "projected": false
       },
       "2027-28": {
-        "ceiling": 102500000,
-        "floor": 75000000,
+        "ceiling": 113500000,
+        "floor": 83900000,
         "projected": true
       },
       "2028-29": {
-        "ceiling": 106000000,
-        "floor": 77500000,
+        "ceiling": 117000000,
+        "floor": 86500000,
         "projected": true
       },
       "2029-30": {
-        "ceiling": 109500000,
-        "floor": 80000000,
+        "ceiling": 120500000,
+        "floor": 89100000,
         "projected": true
       },
       "2030-31": {
-        "ceiling": 113000000,
-        "floor": 82500000,
+        "ceiling": 124000000,
+        "floor": 91700000,
         "projected": true
       },
       "2031-32": {
-        "ceiling": 116500000,
-        "floor": 85000000,
+        "ceiling": 127500000,
+        "floor": 94200000,
         "projected": true
       }
     },
