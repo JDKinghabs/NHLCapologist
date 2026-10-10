@@ -18,6 +18,15 @@ on:
         description: "Also print table rows containing this player name"
         required: false
         default: ""
+      season:
+        description: "Refresh this season instead of the current one (e.g. 2027-28)"
+        required: false
+        default: ""
+      dry_run:
+        description: "Scrape and log, but don't write or commit the data"
+        type: boolean
+        required: false
+        default: false
 
 # Avoid overlapping refresh runs racing on the same file.
 concurrency:
@@ -44,6 +53,8 @@ jobs:
         env:
           SPOTRAC_DEBUG: ${{ inputs.debug_team }}
           SPOTRAC_DEBUG_PLAYER: ${{ inputs.debug_player }}
+          SEASON: ${{ inputs.season }}
+          REFRESH_DRY_RUN: ${{ inputs.dry_run }}
 
       - name: Commit & push if changed
         run: |

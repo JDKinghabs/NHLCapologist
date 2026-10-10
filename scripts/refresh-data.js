@@ -29,6 +29,7 @@ const USER_AGENT =
 const TARGET_ABBR = (process.argv[2] || "").toUpperCase();
 const DEBUG_ABBR = (process.env.SPOTRAC_DEBUG || "").toUpperCase();
 const DEBUG_PLAYER = process.env.SPOTRAC_DEBUG_PLAYER || "";
+const DRY_RUN = process.env.REFRESH_DRY_RUN === "true";
 
 const REQUEST_DELAY_MS = Number(process.env.REQUEST_DELAY_MS) || 1500;
 const MAX_RETRIES = Number(process.env.MAX_RETRIES) || 3;
@@ -573,6 +574,11 @@ async function main() {
   if (JSON.stringify(data) === before) {
     console.log(`\nNo changes from Spotrac for ${SEASON} — leaving ${path.basename(DATA_PATH)} untouched.`);
     if (failures.length) console.log(`Failures (${failures.length}): ${failures.map((f) => f.abbr).join(", ")}`);
+    return;
+  }
+
+  if (DRY_RUN) {
+    console.log(`\nDry run — not writing ${path.basename(DATA_PATH)}.`);
     return;
   }
 
