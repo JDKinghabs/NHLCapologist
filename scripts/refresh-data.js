@@ -1,8 +1,12 @@
-// Refresh data/nhl-cap-data.json by re-scraping Spotrac cap pages.
+// Refresh data/nhl-cap-data.json by re-scraping Spotrac. For each team it
+// reads two pages: the current season's cap page (every roster group, buried
+// and retained amounts, Spotrac's totals) and the multi-year page (each
+// player's cap hit for every future season, age, and UFA/RFA status at
+// expiry). Players and contracts are rebuilt from the resulting cap sheets.
 //
 // It:
 //   - rolls the season window forward on July 1 (see season-window.mjs)
-//   - throttles + retries the 32 team requests
+//   - throttles + retries the 64 page requests
 //   - writes atomically (temp file + rename) so a partial/failed scrape can
 //     never corrupt the existing ~1 MB JSON; teams that fail keep their
 //     last-known-good cap sheet.
@@ -10,25 +14,26 @@
 //     never produces a commit that only bumps date stamps.
 //
 // Usage:
-//   node scripts/refresh-data.js            # all 32 teams, current season
+//   node scripts/refresh-data.js            # all 32 teams
 //   node scripts/refresh-data.js TOR        # single team
-//   SEASON=2027-28 node scripts/refresh-data.js   # another season in the window
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { contractSeasons, currentSeason, rollSeasonWindow } from "./season-window.mjs";
+import { applyCapCeilings, currentSeason, rollSeasonWindow, seasonAt } from "./season-window.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.resolve(__dirname, "..", "data", "nhl-cap-data.json");
 
-const SEASON = process.env.SEASON || currentSeason();
-const YEAR = Number(process.env.YEAR) || Number(SEASON.slice(0, 4));
 const FETCH_DATE = new Date().toISOString().slice(0, 10);
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36";
 const TARGET_ABBR = (process.argv[2] || "").toUpperCase();
 const DEBUG_ABBR = (process.env.SPOTRAC_DEBUG || "").toUpperCase();
-const DEBUG_PLAYER = process.env.SPOTRAC_DEBUG_PLAYER || "";
+// One or more names separated by "|".
+const DEBUG_PLAYERS = (process.env.SPOTRAC_DEBUG_PLAYER || "").split("|").map((name) => name.trim()).filter(Boolean);
+const namesDebugPlayer = (row) => DEBUG_PLAYERS.some((name) => row.includes(name));
+const DRY_RUN = process.env.REFRESH_DRY_RUN === "true";
+const DEBUG_URLS = (process.env.SPOTRAC_DEBUG_URL || "").split(",").map((url) => url.trim()).filter(Boolean);
 
 const REQUEST_DELAY_MS = Number(process.env.REQUEST_DELAY_MS) || 1500;
 const MAX_RETRIES = Number(process.env.MAX_RETRIES) || 3;
@@ -84,14 +89,6 @@ function decodeHtml(text) {
     .trim();
 }
 
-function normalizeName(name) {
-  return decodeHtml(name)
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/gi, "")
-    .toLowerCase();
-}
-
 function safeNum(value) {
   const num = Number(value);
   return Number.isFinite(num) ? num : 0;
@@ -109,8 +106,15 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchSpotracHtml(teamSource) {
-  const url = `https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${YEAR}`;
+function capPageUrl(teamSource, season) {
+  return `https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${season.slice(0, 4)}`;
+}
+
+function yearlyPageUrl(teamSource) {
+  return `https://www.spotrac.com/nhl/${teamSource.slug}/yearly/`;
+}
+
+async function fetchUrl(url) {
   let lastError;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     const controller = new AbortController();
@@ -154,10 +158,10 @@ function extractTableHtml(html, headingText) {
   return match[1];
 }
 
-// Every cap table on a team page sits under a "<SEASON> ..." heading. Each
+// Every cap table on a team page sits under a "<season> ..." heading. Each
 // match is limited to its own table-header block, so a heading with no table
 // can never borrow the next section's rows.
-function extractSeasonSections(html) {
+function extractSeasonSections(html, season) {
   const pattern =
     /<div class="table-header[^"]*">((?:(?!<div class="table-header)[\s\S])*?)<table[^>]*>([\s\S]*?)<\/table>/gi;
   const sections = [];
@@ -165,7 +169,7 @@ function extractSeasonSections(html) {
   while ((match = pattern.exec(html))) {
     const h2 = match[1].match(/<h2>([\s\S]*?)<\/h2>/i);
     const heading = h2 ? stripTags(h2[1]) : "";
-    if (heading.startsWith(`${SEASON} `)) sections.push({ title: heading.slice(SEASON.length + 1), tableHtml: match[2] });
+    if (heading.startsWith(`${season} `)) sections.push({ title: heading.slice(season.length + 1), tableHtml: match[2] });
   }
   return sections;
 }
@@ -202,9 +206,36 @@ function dumpMarkup(html, abbr) {
     console.log(`[debug ${abbr}] SECTION ${squash(stripTags(header))} | rows=${rows.length} | table${squash(tableAttrs)}`);
     console.log(`[debug ${abbr}] THEAD ${squash(thead)}`);
     rows.slice(0, 2).forEach((row) => console.log(`[debug ${abbr}] ROW ${squash(row)}`));
-    if (DEBUG_PLAYER) {
-      rows.filter((row) => row.includes(DEBUG_PLAYER)).forEach((row) => console.log(`[debug ${abbr}] MATCH ${squash(row)}`));
+    rows.filter(namesDebugPlayer).forEach((row) => console.log(`[debug ${abbr}] MATCH ${squash(row)}`));
+  }
+}
+
+// SPOTRAC_DEBUG_URL=<url>[,<url>...] fetches arbitrary Spotrac pages and
+// prints their headings and every table's header and first rows, to explore
+// pages the refresh doesn't read yet. Nothing else runs.
+async function dumpPages(urls) {
+  const squash = (text) => text.replace(/\s+/g, " ").trim().slice(0, 2500);
+  for (const url of urls) {
+    try {
+      const html = await fetchUrl(url);
+      const headings = Array.from(html.matchAll(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi)).map((m) => squash(stripTags(m[1]))).filter(Boolean);
+      console.log(`[debug-url ${url}] ${html.length} bytes | headings: ${headings.join(" | ").slice(0, 2500)}`);
+      for (const [, attrs, tableHtml] of html.matchAll(/<table([^>]*)>([\s\S]*?)<\/table>/gi)) {
+        const thead = (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i) || [])[1] || "";
+        const rows = (tableHtml.match(/<tbody>([\s\S]*?)<\/tbody>/i)?.[1] || tableHtml).match(/<tr[\s\S]*?<\/tr>/gi) || [];
+        console.log(`[debug-url] TABLE${squash(attrs)} rows=${rows.length} | THEAD ${squash(stripTags(thead.replace(/<\/th>/gi, " | </th>")))}`);
+        // Summary tables print every row as text; others print their first rows' markup.
+        if (/summary/i.test(attrs)) {
+          rows.forEach((row) => console.log(`[debug-url] SUMMARY ${squash(stripTags(row.replace(/<\/td>/gi, " | </td>")))}`));
+        } else {
+          rows.slice(0, 2).forEach((row) => console.log(`[debug-url] ROW ${squash(row)}`));
+          rows.filter(namesDebugPlayer).forEach((row) => console.log(`[debug-url] MATCH ${row.replace(/\s+/g, " ").slice(0, 6000)}`));
+        }
+      }
+    } catch (error) {
+      console.log(`[debug-url ${url}] ${error.message}`);
     }
+    await sleep(REQUEST_DELAY_MS);
   }
 }
 
@@ -275,8 +306,8 @@ function parsePlayerRows(tableHtml) {
   return rows;
 }
 
-function parseCapTotals(html) {
-  const tableHtml = extractTableHtml(html, `${SEASON} Cap Totals`);
+function parseCapTotals(html, season) {
+  const tableHtml = extractTableHtml(html, `${season} Cap Totals`);
   const tbody = extractTbody(tableHtml);
   const rows = {};
   const rowPattern = /<tr class="(?:totals|divider)[^"]*">([\s\S]*?)<\/tr>/gi;
@@ -296,11 +327,11 @@ function parseCapTotals(html) {
 const PLAYER_KINDS = ["active", "ir", "ltir", "nonRoster", "reserve", "minors"];
 const ADJUSTMENT_KINDS = { buyout: "buyout", retained: "retainedSalary", other: "other" };
 
-function parseTeamPage(teamSource, html) {
+function parseTeamPage(teamSource, html, season) {
   const parsed = { sections: [], unknown: [] };
   [...PLAYER_KINDS, ...Object.keys(ADJUSTMENT_KINDS)].forEach((kind) => (parsed[kind] = []));
 
-  extractSeasonSections(html).forEach(({ title, tableHtml }) => {
+  extractSeasonSections(html, season).forEach(({ title, tableHtml }) => {
     const kind = classifySection(title);
     if (kind === "totals") return;
     const rows = parsePlayerRows(tableHtml);
@@ -311,9 +342,9 @@ function parseTeamPage(teamSource, html) {
   });
 
   if (!parsed.sections.some((section) => section.kind === "active")) {
-    throw new Error(`Could not find an "${SEASON} Active Roster" section`);
+    throw new Error(`Could not find an "${season} Active Roster" section`);
   }
-  parsed.totals = parseCapTotals(html);
+  parsed.totals = parseCapTotals(html, season);
   return parsed;
 }
 
@@ -369,66 +400,19 @@ function fmtMoney(amount) {
   return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
 
-// Players are matched by Spotrac ID; older hand-entered records (TOR_34
-// style IDs) by name and position. Spotrac is the source for positions.
-function ensurePlayer(data, playerIndex, row) {
-  const spotracId = `SR_${row.spotracId}`;
-  const key = `${normalizeName(row.name)}|${row.pos}`;
-  let player = playerIndex.byId.get(spotracId) || playerIndex.byId.get(playerIndex.byName.get(key));
-
-  if (!player) {
-    player = { id: spotracId, name: row.name, pos: row.pos, age: 0 };
-    data.players.push(player);
-    playerIndex.byId.set(player.id, player);
-  }
-  if (row.pos && player.pos !== row.pos) player.pos = row.pos;
-  playerIndex.byName.set(key, player.id);
-  return player.id;
-}
-
-function ensureSeasonContract(data, playerId, teamAbbr, row) {
-  let contract = (data.contracts || []).find(
-    (entry) => entry.playerId === playerId && entry.team === teamAbbr && contractSeasons(entry).includes(SEASON)
-  );
-
-  if (!contract) {
-    contract = {
-      playerId,
-      team: teamAbbr,
-      type: "UFA",
-      startSeason: SEASON,
-      years: 1,
-      aav: row.totalCap,
-      capHits: {
-        [SEASON]: row.adjustedCap,
-      },
-      source: "Spotrac",
-    };
-    data.contracts.push(contract);
-    return contract;
-  }
-
-  contract.team = teamAbbr;
-  contract.aav = row.totalCap || contract.aav || row.adjustedCap;
-  contract.capHits = contract.capHits || {};
-  contract.capHits[SEASON] = row.adjustedCap;
-  contract.source = "Spotrac";
-  return contract;
-}
-
-function buildCapSheet(teamSource, parsed, data, playerIndex, dropped) {
+function buildCapSheet(teamSource, season, parsed, dropped) {
   const items = [];
   const adjustments = [];
 
   PLAYER_KINDS.forEach((category) => {
     parsed[category].forEach((row) => {
-      const playerId = ensurePlayer(data, playerIndex, row);
-      ensureSeasonContract(data, playerId, teamSource.abbr, row);
       items.push({
         kind: "player",
-        playerId,
+        playerId: `SR_${row.spotracId}`,
         category,
         capHit: row.adjustedCap,
+        // The full cap hit, when burying in the minors reduces what counts.
+        ...(row.totalCap !== row.adjustedCap ? { aav: row.totalCap } : {}),
         ...(row.baseSalary ? { baseSalary: row.baseSalary } : {}),
         ...(row.signingBonus ? { signingBonus: row.signingBonus } : {}),
         ...(row.incentives ? { incentives: row.incentives } : {}),
@@ -465,14 +449,257 @@ function buildCapSheet(teamSource, parsed, data, playerIndex, dropped) {
 
   const sectionSummary = parsed.sections.map((section) => `${section.title}=${section.sum}`).join("; ");
   const notes = [
-    `Imported from Spotrac ${SEASON} cap table on ${FETCH_DATE}.`,
-    `Source URL: https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${YEAR}`,
+    `Imported from Spotrac ${season} cap table on ${FETCH_DATE}.`,
+    `Source URL: ${capPageUrl(teamSource, season)}`,
     `Sections: ${sectionSummary}.`,
     `Spotrac total allocations=${parsed.totals["Total Allocations"] || "n/a"}; cap space=${parsed.totals["Cap Space"] || "n/a"}.`,
   ];
   dropped.forEach((row) => notes.push(`Skipped ${row.name}: Spotrac cap hit ${fmtMoney(Math.max(row.adjustedCap, row.totalCap))} exceeds the max player salary.`));
 
   return { status: "complete", items, adjustments, notes };
+}
+
+function moneyIn(text) {
+  const match = String(text || "").match(/\$\s*(-?[\d,]+)/);
+  return match ? Number(match[1].replace(/,/g, "")) : null;
+}
+
+// Multi-year page tables are identified by their id (dataTable-active,
+// dataTable-long-term-injured, ...) or class (the Minor and Summary tables).
+function yearlyTableKind(attrs) {
+  const id = (attrs.match(/\bid="([^"]*)"/i) || [])[1] || "";
+  const cls = (attrs.match(/\bclass="([^"]*)"/i) || [])[1] || "";
+  if (/yearly-minors-table/.test(cls)) return "minors";
+  if (/\bsummary\b/.test(cls)) return "summary";
+  if (!/dataTable-yearly/.test(cls)) return null;
+  const key = id.replace(/^dataTable-/, "");
+  if (/long-term/.test(key)) return "ltir";
+  if (/injured/.test(key)) return "ir";
+  if (/reserve|suspend/.test(key)) return "reserve";
+  if (/non-roster/.test(key)) return "nonRoster";
+  if (/active/.test(key)) return "active";
+  if (/dead|buyout/.test(key)) return "buyout";
+  if (/retained/.test(key)) return "retained";
+  return `unknown:${id}`;
+}
+
+// The multi-year page has one table per roster group, a column per season
+// holding the player's cap hit (or a UFA/RFA badge in the season after a
+// contract ends), plus a Summary table of per-season totals. When a player
+// has already signed his next contract, the badge cell carries that
+// contract's first cap hit in data-export and later seasons continue it.
+function parseYearlyPage(html) {
+  const page = { rows: [], summary: {}, unknown: [] };
+  for (const [, attrs, tableHtml] of html.matchAll(/<table([^>]*)>([\s\S]*?)<\/table>/gi)) {
+    const kind = yearlyTableKind(attrs);
+    if (!kind) continue;
+    if (kind.startsWith("unknown:")) {
+      page.unknown.push(kind.slice("unknown:".length));
+      continue;
+    }
+    const thead = (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i) || [])[1] || "";
+    const headers = Array.from(thead.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/gi)).map((match) => stripTags(match[1]));
+    const seasonColumns = headers.map((header, idx) => [header, idx]).filter(([header]) => /^\d{4}-\d{2}$/.test(header));
+    const rows = (extractTbody(tableHtml) || tableHtml).match(/<tr\b[\s\S]*?<\/tr>/gi) || [];
+    const cellsOf = (rowHtml) => Array.from(rowHtml.matchAll(/<td\b([^>]*)>([\s\S]*?)<\/td>/gi)).map((match) => match[2]);
+    const exportsOf = (rowHtml) => Array.from(rowHtml.matchAll(/<td\b([^>]*)>/gi)).map((match) => safeNum((match[1].match(/data-export="(\d+)"/) || [])[1]));
+
+    if (kind === "summary") {
+      rows.forEach((rowHtml) => {
+        const cells = cellsOf(rowHtml);
+        const label = stripTags(cells[0]);
+        if (label) page.summary[label] = Object.fromEntries(seasonColumns.map(([season, idx]) => [season, moneyIn(stripTags(cells[idx]))]));
+      });
+      continue;
+    }
+
+    const column = (name) => headers.findIndex((header) => header.toLowerCase() === name);
+    rows.forEach((rowHtml) => {
+      const link = rowHtml.match(/player\/_\/id\/(\d+)\/[^"]*" class="link[^"]*"[^>]*>([^<]+)<\/a>/i);
+      if (!link) return;
+      const cells = cellsOf(rowHtml);
+      const exported = exportsOf(rowHtml);
+      const clauses = {};
+      for (const [, season, clause] of rowHtml.matchAll(/(\d{4}-\d{2}):\s*(?:<i[^>]*><\/i>\s*)?(M-NMC|M-NTC|NMC|NTC)\b/gi)) {
+        clauses[season] = clause.toUpperCase();
+      }
+      const capHits = {};
+      const expiries = [];
+      const amountAt = (idx) => moneyIn(stripTags(cells[idx] || "")) || 0;
+      seasonColumns.forEach(([season, idx], col) => {
+        const status = ((cells[idx] || "").match(/pill-(ufa|rfa)\b/i) || [])[1];
+        if (status) {
+          expiries.push({ season, status: status.toUpperCase() });
+          const nextIdx = seasonColumns[col + 1]?.[1];
+          if (exported[idx] > 0 && nextIdx !== undefined && amountAt(nextIdx) > 0) capHits[season] = exported[idx];
+          return;
+        }
+        const amount = amountAt(idx);
+        if (amount > 0) capHits[season] = amount;
+      });
+      page.rows.push({
+        kind,
+        spotracId: link[1],
+        name: decodeHtml(link[2]),
+        pos: stripTags(cells[column("pos")] || ""),
+        age: safeNum(stripTags(cells[column("age")] || "")) || null,
+        capHits,
+        clauses,
+        expiries,
+      });
+    });
+  }
+  if (!page.rows.some((row) => row.kind === "active") || !page.summary["Total Cap"]) {
+    throw new Error("Multi-year page has no Active Roster or Summary table");
+  }
+  return page;
+}
+
+// Future seasons come from the multi-year page. It lists players at their
+// full cap hit, so salary another team retains (from that team's Retained
+// table) is subtracted. Minor-league players count only for a buried portion
+// (if any), so they are kept at capHit 0, and whatever part of Spotrac's
+// Total Cap the page doesn't itemize is recorded as one charge. Spotrac's
+// projected totals sometimes leave out a listed depth contract, so listed
+// contracts may exceed its total by up to OVER_TOTAL_TOLERANCE (noted on the
+// sheet); beyond that the page was misread, which fails the team.
+const OVER_TOTAL_TOLERANCE = 2_500_000;
+
+function buildFutureSheets(teamSource, page, seasons, maxSalary, retainedElsewhere = new Map()) {
+  const abbr = teamSource.abbr;
+  const sheets = {};
+  seasons.forEach((season) => {
+    const items = [];
+    const adjustments = [];
+    const counts = {};
+    let skipped = 0;
+    let minorsTotal = 0;
+
+    page.rows.forEach((row) => {
+      const capHit = row.capHits[season];
+      if (!capHit) return;
+      if (capHit > maxSalary(season)) {
+        skipped += capHit;
+        console.warn(`  ${abbr}: skipped ${row.name} ${season} — Spotrac cap hit ${fmtMoney(capHit)} exceeds the max salary`);
+        return;
+      }
+      const playerId = `SR_${row.spotracId}`;
+      if (row.kind === "buyout" || row.kind === "retained") {
+        counts[row.kind] = (counts[row.kind] || 0) + 1;
+        adjustments.push({
+          id: `${abbr}-${row.kind}-${counts[row.kind]}`,
+          label: row.name,
+          category: row.kind === "buyout" ? "buyout" : "retainedSalary",
+          amount: capHit,
+          notes: row.kind === "buyout" ? "Buyout charge from Spotrac" : "Retained salary charge from Spotrac",
+        });
+      } else if (row.kind === "minors") {
+        minorsTotal += capHit;
+        items.push({ kind: "player", playerId, category: "minors", capHit: 0, aav: capHit, notes: [] });
+      } else {
+        const retained = retainedElsewhere.get(playerId)?.[season] || 0;
+        items.push({
+          kind: "player",
+          playerId,
+          category: "active",
+          capHit: Math.max(0, capHit - retained),
+          ...(retained ? { aav: capHit } : {}),
+          ...(row.clauses[season] ? { clause: row.clauses[season] } : {}),
+        });
+      }
+    });
+
+    const total = page.summary["Total Cap"]?.[season] || 0;
+    const listed =
+      items.reduce((sum, item) => sum + item.capHit, 0) + adjustments.reduce((sum, adj) => sum + adj.amount, 0);
+    const remainder = total - skipped - listed;
+    const notes = [
+      `Imported from Spotrac multi-year cap table on ${FETCH_DATE}.`,
+      `Source URL: ${yearlyPageUrl(teamSource)}`,
+      `Spotrac total cap=${fmtMoney(total)}.`,
+    ];
+    if (remainder < -OVER_TOTAL_TOLERANCE) {
+      throw new Error(`${season}: itemized ${fmtMoney(listed)} exceeds Spotrac's total cap ${fmtMoney(total)}`);
+    }
+    if (remainder < -1000) {
+      console.warn(`  ${abbr}: ${season} contracts total ${fmtMoney(-remainder)} more than Spotrac's projected total cap`);
+      notes.push(`Contracts listed total ${fmtMoney(-remainder)} more than Spotrac's projected total cap.`);
+    }
+    if (remainder > 1000) {
+      if (remainder > minorsTotal + 1_000_000) {
+        console.warn(`  ${abbr}: ${season} has ${fmtMoney(remainder)} of unitemized cap, more than its minor-league contracts`);
+      }
+      adjustments.push({
+        id: `${abbr}-buried-1`,
+        label: "Buried contracts and other charges",
+        category: "buried",
+        amount: remainder,
+        notes: "Part of Spotrac's total cap not itemized on its multi-year page",
+      });
+    }
+
+    sheets[season] = { status: "complete", items, adjustments, notes };
+  });
+  return sheets;
+}
+
+function retainedByPlayer(pages) {
+  const retained = new Map();
+  pages.forEach((page) =>
+    page.rows
+      .filter((row) => row.kind === "retained")
+      .forEach((row) => {
+        const seasons = retained.get(`SR_${row.spotracId}`) || {};
+        Object.entries(row.capHits).forEach(([season, amount]) => (seasons[season] = (seasons[season] || 0) + amount));
+        retained.set(`SR_${row.spotracId}`, seasons);
+      })
+  );
+  return retained;
+}
+
+// Contracts are derived from the cap sheets: a player's consecutive seasons
+// with one team at one cap hit form one contract. Expiry status (UFA/RFA)
+// comes from the multi-year page's badge in the season after the last one.
+function rebuildPlayersAndContracts(data, playerInfo, expiries) {
+  const seasonsByKey = new Map();
+  data.meta.seasons.forEach((season) => {
+    Object.entries(data.capSheets[season] || {}).forEach(([team, sheet]) => {
+      sheet.items.forEach((item) => {
+        if (item.kind !== "player") return;
+        const key = `${team}|${item.playerId}`;
+        if (!seasonsByKey.has(key)) seasonsByKey.set(key, []);
+        seasonsByKey.get(key).push({ season, item });
+      });
+    });
+  });
+
+  const contracts = [];
+  seasonsByKey.forEach((entries, key) => {
+    const [team, playerId] = key.split("|");
+    let contract = null;
+    entries.forEach(({ season, item }) => {
+      const aav = item.aav ?? item.capHit;
+      if (!contract || seasonAt(contract.startSeason, contract.years) !== season || contract.aav !== aav) {
+        contract = { playerId, team, startSeason: season, years: 0, aav, capHits: {}, source: "Spotrac" };
+        contracts.push(contract);
+      }
+      contract.years += 1;
+      contract.capHits[season] = item.capHit;
+      if (item.clause && !contract.clause) contract.clause = item.clause;
+    });
+  });
+  contracts.forEach((contract) => {
+    const end = seasonAt(contract.startSeason, contract.years);
+    const expiry = (expiries.get(`${contract.team}|${contract.playerId}`) || []).find((entry) => entry.season === end);
+    if (expiry) contract.expiryStatus = expiry.status;
+  });
+  data.contracts = contracts;
+
+  const existing = new Map((data.players || []).map((player) => [player.id, player]));
+  data.players = [...new Set(contracts.map((contract) => contract.playerId))].map((id) => ({
+    ...(existing.get(id) || { id, name: id, pos: "", age: 0 }),
+    ...(playerInfo.get(id) || {}),
+  }));
 }
 
 // The "Imported from Spotrac ... on <date>" note changes every run, so it is
@@ -485,20 +712,10 @@ function sameCapSheet(a, b) {
 
 // Spotrac occasionally serves an alternate page (different tables, no
 // readable rows); those are refused, so a refused page is fetched once more.
-async function scrapeTeam(teamSource, maxSalary) {
-  const abbr = teamSource.abbr;
+async function withRetry(abbr, scrape) {
   for (let attempt = 1; ; attempt++) {
     try {
-      const html = await fetchSpotracHtml(teamSource);
-      if (DEBUG_ABBR === abbr) dumpMarkup(html, abbr);
-      const parsed = parseTeamPage(teamSource, html);
-      console.log(`${abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
-      parsed.unknown.forEach((section) =>
-        console.warn(`  ${abbr}: ignored unrecognized section "${section.title}" (${section.count} rows, ${fmtMoney(section.sum)})`)
-      );
-      const dropped = dropImpossibleCapHits(parsed, maxSalary, abbr);
-      checkAgainstSpotracTotals(parsed, dropped);
-      return { parsed, dropped };
+      return await scrape();
     } catch (error) {
       if (attempt >= 2) throw error;
       console.warn(`  ${abbr}: ${error.message} — fetching the page again`);
@@ -507,95 +724,161 @@ async function scrapeTeam(teamSource, maxSalary) {
   }
 }
 
+function scrapeCapPage(teamSource, season, maxSalary) {
+  const abbr = teamSource.abbr;
+  return withRetry(abbr, async () => {
+    const html = await fetchUrl(capPageUrl(teamSource, season));
+    if (DEBUG_ABBR === abbr) dumpMarkup(html, abbr);
+    const parsed = parseTeamPage(teamSource, html, season);
+    console.log(`${abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
+    parsed.unknown.forEach((section) =>
+      console.warn(`  ${abbr}: ignored unrecognized section "${section.title}" (${section.count} rows, ${fmtMoney(section.sum)})`)
+    );
+    const dropped = dropImpossibleCapHits(parsed, maxSalary, abbr);
+    checkAgainstSpotracTotals(parsed, dropped);
+    return { parsed, dropped };
+  });
+}
+
+function scrapeYearlyPage(teamSource) {
+  return withRetry(teamSource.abbr, async () => {
+    const page = parseYearlyPage(await fetchUrl(yearlyPageUrl(teamSource)));
+    page.unknown.forEach((id) => console.warn(`  ${teamSource.abbr}: ignored unrecognized multi-year table "${id}"`));
+    return page;
+  });
+}
+
 function writeDataAtomic(data) {
   const tmpPath = `${DATA_PATH}.tmp`;
   fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf8");
   fs.renameSync(tmpPath, DATA_PATH); // atomic on the same filesystem
 }
 
+function setSheet(sheetsByTeam, abbr, sheet) {
+  const prev = sheetsByTeam[abbr];
+  if (!prev || !sameCapSheet(prev, sheet)) sheetsByTeam[abbr] = sheet;
+}
+
 async function main() {
+  if (DEBUG_URLS.length) return dumpPages(DEBUG_URLS);
   const data = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
   const before = JSON.stringify(data);
-  data.meta = data.meta || {};
   // On July 1 the finished season drops off and a new final season is added.
   if ((data.meta.seasons?.[0] || "") < currentSeason()) rollSeasonWindow(data, currentSeason());
-  const seasons = data.meta.seasons || [];
-  if (!seasons.includes(SEASON)) {
-    throw new Error(`Season ${SEASON} is not in meta.seasons (${seasons.join(", ")}) — add it before refreshing.`);
-  }
+  const [season, ...futureSeasons] = data.meta.seasons;
   data.capSheets = data.capSheets || {};
-  data.capSheets[SEASON] = data.capSheets[SEASON] || {};
+  data.meta.seasons.forEach((s) => (data.capSheets[s] = data.capSheets[s] || {}));
+  const maxSalary = (s) => 0.2 * (data.meta.caps?.[s]?.ceiling || Infinity);
 
-  const maxSalary = 0.2 * (data.meta.caps?.[SEASON]?.ceiling || Infinity);
-  // An older import could add a second record under the same Spotrac ID;
-  // keep the one with a real position.
-  const byId = new Map();
-  (data.players || []).forEach((player) => {
-    const prev = byId.get(player.id);
-    if (!prev || /^\d+$/.test(prev.pos)) byId.set(player.id, player);
-  });
-  data.players = [...byId.values()];
-  const playerIndex = { byId, byName: new Map() };
-  data.players.forEach((player) => playerIndex.byName.set(`${normalizeName(player.name)}|${player.pos}`, player.id));
-
-  const sources = TARGET_ABBR
-    ? TEAM_SOURCES.filter((teamSource) => teamSource.abbr === TARGET_ABBR)
-    : TEAM_SOURCES;
-
+  const sources = TARGET_ABBR ? TEAM_SOURCES.filter((teamSource) => teamSource.abbr === TARGET_ABBR) : TEAM_SOURCES;
   if (TARGET_ABBR && sources.length === 0) {
     throw new Error(`Unknown team abbreviation: ${TARGET_ABBR}`);
   }
 
-  const report = [];
+  const playerInfo = new Map();
+  const expiries = new Map();
+  const yearlyPages = new Map();
+  let ceilings = null;
+  let refreshed = 0;
   const failures = [];
 
   for (let i = 0; i < sources.length; i++) {
     const teamSource = sources[i];
+    const abbr = teamSource.abbr;
+    // Each page is fetched and parsed before anything is changed, so a failure
+    // leaves that team's existing sheets intact.
     try {
-      // Fetch + parse first (no mutation); only commit to `data` once parsing
-      // fully succeeds, so a failure leaves this team's prior cap sheet intact.
-      const { parsed, dropped } = await scrapeTeam(teamSource, maxSalary);
-      const sheet = buildCapSheet(teamSource, parsed, data, playerIndex, dropped);
-      const prev = data.capSheets[SEASON][teamSource.abbr];
-      if (!prev || !sameCapSheet(prev, sheet)) data.capSheets[SEASON][teamSource.abbr] = sheet;
-      report.push({ abbr: teamSource.abbr });
+      const { parsed, dropped } = await scrapeCapPage(teamSource, season, maxSalary(season));
+      setSheet(data.capSheets[season], abbr, buildCapSheet(teamSource, season, parsed, dropped));
+      PLAYER_KINDS.forEach((kind) =>
+        parsed[kind].forEach((row) => playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos }))
+      );
+      refreshed++;
     } catch (error) {
-      failures.push({ abbr: teamSource.abbr, message: error.message });
-      console.error(`!! ${teamSource.abbr} FAILED: ${error.message} (keeping last-known-good cap sheet)`);
+      failures.push(`${abbr} ${season}`);
+      console.error(`!! ${abbr} ${season} FAILED: ${error.message} (keeping last-known-good cap sheet)`);
+    }
+    await sleep(REQUEST_DELAY_MS);
+
+    try {
+      yearlyPages.set(abbr, await scrapeYearlyPage(teamSource));
+    } catch (error) {
+      failures.push(`${abbr} multi-year`);
+      console.error(`!! ${abbr} multi-year FAILED: ${error.message} (keeping last-known-good future sheets)`);
     }
     if (i < sources.length - 1) await sleep(REQUEST_DELAY_MS);
   }
 
-  if (report.length === 0) {
-    throw new Error(`All ${sources.length} team(s) failed to refresh — leaving ${path.basename(DATA_PATH)} untouched.`);
+  // Future sheets need every team's Retained table, so they are built once all
+  // multi-year pages are in. A single-team run only sees its own page.
+  const retainedElsewhere = retainedByPlayer(yearlyPages);
+  sources.forEach((teamSource) => {
+    const abbr = teamSource.abbr;
+    const page = yearlyPages.get(abbr);
+    if (!page) return;
+    try {
+      const sheets = buildFutureSheets(teamSource, page, futureSeasons, maxSalary, retainedElsewhere);
+      futureSeasons.forEach((s) => setSheet(data.capSheets[s], abbr, sheets[s]));
+      page.rows.forEach((row) => {
+        if (row.kind === "buyout" || row.kind === "retained") return;
+        const id = `SR_${row.spotracId}`;
+        playerInfo.set(id, { ...playerInfo.get(id), name: row.name, ...(row.pos ? { pos: row.pos } : {}), ...(row.age ? { age: row.age } : {}) });
+        if (row.expiries.length) expiries.set(`${abbr}|${id}`, row.expiries);
+      });
+      ceilings = ceilings || page.summary["Cap Maximum"];
+      console.log(
+        `${abbr} future: ${futureSeasons
+          .filter((s) => sheets[s].items.length)
+          .map((s) => `${s} ${fmtMoney(page.summary["Total Cap"]?.[s] || 0)}`)
+          .join(", ")}`
+      );
+      refreshed++;
+    } catch (error) {
+      failures.push(`${abbr} multi-year`);
+      console.error(`!! ${abbr} multi-year FAILED: ${error.message} (keeping last-known-good future sheets)`);
+    }
+  });
+
+  if (refreshed === 0) {
+    throw new Error(`Every page failed — leaving ${path.basename(DATA_PATH)} untouched.`);
   }
 
+  if (ceilings) applyCapCeilings(data.meta, ceilings);
+  rebuildPlayersAndContracts(data, playerInfo, expiries);
+
+  const summary = `Refreshed ${refreshed}/${sources.length * 2} pages. Players: ${data.players.length} | Contracts: ${data.contracts.length}`;
   if (JSON.stringify(data) === before) {
-    console.log(`\nNo changes from Spotrac for ${SEASON} — leaving ${path.basename(DATA_PATH)} untouched.`);
-    if (failures.length) console.log(`Failures (${failures.length}): ${failures.map((f) => f.abbr).join(", ")}`);
+    console.log(`\nNo changes from Spotrac — leaving ${path.basename(DATA_PATH)} untouched. ${summary}`);
+    if (failures.length) console.log(`Failures (${failures.length}): ${failures.join(", ")}`);
+    return;
+  }
+
+  if (DRY_RUN) {
+    console.log(`\nDry run — not writing ${path.basename(DATA_PATH)}. ${summary}`);
+    if (failures.length) console.log(`Failures (${failures.length}): ${failures.join(", ")}`);
     return;
   }
 
   data.meta.updated = FETCH_DATE;
-  data.meta.notes = `${SEASON} cap sheets refreshed from Spotrac on ${FETCH_DATE}. Future cap figures remain projections.`;
+  data.meta.notes = `Cap data refreshed from Spotrac on ${FETCH_DATE}. Cap ceilings after ${season} are projections.`;
   data.meta.schemaVersion = data.meta.schemaVersion || 2;
 
   writeDataAtomic(data);
 
-  console.log(`\nRefreshed ${report.length}/${sources.length} teams for ${SEASON}.`);
-  if (failures.length) {
-    console.log(`Failures (${failures.length}): ${failures.map((f) => f.abbr).join(", ")}`);
-  }
-  console.log(`Players: ${data.players.length} | Contracts: ${data.contracts.length}`);
+  console.log(`\n${summary}`);
+  if (failures.length) console.log(`Failures (${failures.length}): ${failures.join(", ")}`);
 }
 
 export {
+  buildFutureSheets,
   capTotalsCharges,
   checkAgainstSpotracTotals,
   classifySection,
   dropImpossibleCapHits,
   parsePlayerRows,
   parseTeamPage,
+  parseYearlyPage,
+  rebuildPlayersAndContracts,
   sameCapSheet,
 };
 

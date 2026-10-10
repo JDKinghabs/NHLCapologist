@@ -1,6 +1,6 @@
 name: Refresh cap data
 
-# Re-scrapes Spotrac for the current season and commits data/nhl-cap-data.json
+# Re-scrapes Spotrac (each team's current cap page and multi-year page) and commits data/nhl-cap-data.json
 # when the cap data actually changed (days with no changes produce no commit).
 # The commit (pushed to main) triggers the Cloudflare Pages redeploy.
 
@@ -18,6 +18,15 @@ on:
         description: "Also print table rows containing this player name"
         required: false
         default: ""
+      debug_url:
+        description: "Only fetch and print these Spotrac URLs (comma-separated); no refresh"
+        required: false
+        default: ""
+      dry_run:
+        description: "Scrape and log, but don't write or commit the data"
+        type: boolean
+        required: false
+        default: false
 
 # Avoid overlapping refresh runs racing on the same file.
 concurrency:
@@ -44,6 +53,8 @@ jobs:
         env:
           SPOTRAC_DEBUG: ${{ inputs.debug_team }}
           SPOTRAC_DEBUG_PLAYER: ${{ inputs.debug_player }}
+          REFRESH_DRY_RUN: ${{ inputs.dry_run }}
+          SPOTRAC_DEBUG_URL: ${{ inputs.debug_url }}
 
       - name: Commit & push if changed
         run: |

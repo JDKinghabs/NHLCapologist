@@ -30,9 +30,26 @@ export function contractSeasons(contract) {
   return Array.from({ length: contract.years }, (_, i) => seasonAt(contract.startSeason, i));
 }
 
+function floorFor(ceiling) {
+  return Math.round((ceiling * FLOOR_TO_CEILING) / 100_000) * 100_000;
+}
+
 function projectedCap(previous) {
   const ceiling = previous.ceiling + PROJECTED_CAP_STEP;
-  return { ceiling, floor: Math.round((ceiling * FLOOR_TO_CEILING) / 100_000) * 100_000, projected: true };
+  return { ceiling, floor: floorFor(ceiling), projected: true };
+}
+
+// Spotrac publishes projected ceilings for the next few seasons; those replace
+// the placeholder step, and later seasons are projected from the last one.
+// The current season's official cap is left as is.
+export function applyCapCeilings(meta, ceilings) {
+  meta.seasons.forEach((season, i) => {
+    if (i === 0) return;
+    const ceiling = ceilings[season];
+    meta.caps[season] = ceiling
+      ? { ceiling, floor: floorFor(ceiling), projected: true }
+      : projectedCap(meta.caps[meta.seasons[i - 1]]);
+  });
 }
 
 // Moves `data` to the window starting at `first`. Returns true if anything changed.
