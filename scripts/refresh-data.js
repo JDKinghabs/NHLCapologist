@@ -556,13 +556,16 @@ function parseYearlyPage(html) {
 }
 
 // Future seasons come from the multi-year page. It lists players at their
-// full cap hit, so a player whose former team retains part of his salary
-// (shown by the current cap page's adjusted cap hit) counts for the same
-// lower amount in later seasons. Minor-league players count only for a buried
-// portion (if any), so they are kept at capHit 0, and whatever part of
-// Spotrac's Total Cap the page doesn't itemize is recorded as one charge. A
-// negative remainder means the page was misread, which fails the team.
-function buildFutureSheets(teamSource, page, seasons, maxSalary, retention = new Map()) {
+// full cap hit, so salary another team retains (from that team's Retained
+// table) is subtracted. Minor-league players count only for a buried portion
+// (if any), so they are kept at capHit 0, and whatever part of Spotrac's
+// Total Cap the page doesn't itemize is recorded as one charge. Spotrac's
+// projected totals sometimes leave out a listed depth contract, so listed
+// contracts may exceed its total by up to OVER_TOTAL_TOLERANCE (noted on the
+// sheet); beyond that the page was misread, which fails the team.
+const OVER_TOTAL_TOLERANCE = 2_500_000;
+
+function buildFutureSheets(teamSource, page, seasons, maxSalary, retainedElsewhere = new Map()) {
   const abbr = teamSource.abbr;
   const sheets = {};
   seasons.forEach((season) => {
@@ -594,7 +597,7 @@ function buildFutureSheets(teamSource, page, seasons, maxSalary, retention = new
         minorsTotal += capHit;
         items.push({ kind: "player", playerId, category: "minors", capHit: 0, aav: capHit, notes: [] });
       } else {
-        const retained = retention.get(playerId) || 0;
+        const retained = retainedElsewhere.get(playerId)?.[season] || 0;
         items.push({
           kind: "player",
           playerId,
@@ -610,8 +613,17 @@ function buildFutureSheets(teamSource, page, seasons, maxSalary, retention = new
     const listed =
       items.reduce((sum, item) => sum + item.capHit, 0) + adjustments.reduce((sum, adj) => sum + adj.amount, 0);
     const remainder = total - skipped - listed;
-    if (remainder < -1000) {
+    const notes = [
+      `Imported from Spotrac multi-year cap table on ${FETCH_DATE}.`,
+      `Source URL: ${yearlyPageUrl(teamSource)}`,
+      `Spotrac total cap=${fmtMoney(total)}.`,
+    ];
+    if (remainder < -OVER_TOTAL_TOLERANCE) {
       throw new Error(`${season}: itemized ${fmtMoney(listed)} exceeds Spotrac's total cap ${fmtMoney(total)}`);
+    }
+    if (remainder < -1000) {
+      console.warn(`  ${abbr}: ${season} contracts total ${fmtMoney(-remainder)} more than Spotrac's projected total cap`);
+      notes.push(`Contracts listed total ${fmtMoney(-remainder)} more than Spotrac's projected total cap.`);
     }
     if (remainder > 1000) {
       if (remainder > minorsTotal + 1_000_000) {
@@ -626,18 +638,23 @@ function buildFutureSheets(teamSource, page, seasons, maxSalary, retention = new
       });
     }
 
-    sheets[season] = {
-      status: "complete",
-      items,
-      adjustments,
-      notes: [
-        `Imported from Spotrac multi-year cap table on ${FETCH_DATE}.`,
-        `Source URL: ${yearlyPageUrl(teamSource)}`,
-        `Spotrac total cap=${fmtMoney(total)}.`,
-      ],
-    };
+    sheets[season] = { status: "complete", items, adjustments, notes };
   });
   return sheets;
+}
+
+function retainedByPlayer(pages) {
+  const retained = new Map();
+  pages.forEach((page) =>
+    page.rows
+      .filter((row) => row.kind === "retained")
+      .forEach((row) => {
+        const seasons = retained.get(`SR_${row.spotracId}`) || {};
+        Object.entries(row.capHits).forEach(([season, amount]) => (seasons[season] = (seasons[season] || 0) + amount));
+        retained.set(`SR_${row.spotracId}`, seasons);
+      })
+  );
+  return retained;
 }
 
 // Contracts are derived from the cap sheets: a player's consecutive seasons
@@ -723,11 +740,11 @@ function scrapeCapPage(teamSource, season, maxSalary) {
   });
 }
 
-function scrapeYearlyPage(teamSource, seasons, maxSalary, retention) {
+function scrapeYearlyPage(teamSource) {
   return withRetry(teamSource.abbr, async () => {
     const page = parseYearlyPage(await fetchUrl(yearlyPageUrl(teamSource)));
     page.unknown.forEach((id) => console.warn(`  ${teamSource.abbr}: ignored unrecognized multi-year table "${id}"`));
-    return { page, sheets: buildFutureSheets(teamSource, page, seasons, maxSalary, retention) };
+    return page;
   });
 }
 
@@ -760,6 +777,7 @@ async function main() {
 
   const playerInfo = new Map();
   const expiries = new Map();
+  const yearlyPages = new Map();
   let ceilings = null;
   let refreshed = 0;
   const failures = [];
@@ -769,16 +787,11 @@ async function main() {
     const abbr = teamSource.abbr;
     // Each page is fetched and parsed before anything is changed, so a failure
     // leaves that team's existing sheets intact.
-    const retention = new Map();
     try {
       const { parsed, dropped } = await scrapeCapPage(teamSource, season, maxSalary(season));
       setSheet(data.capSheets[season], abbr, buildCapSheet(teamSource, season, parsed, dropped));
       PLAYER_KINDS.forEach((kind) =>
-        parsed[kind].forEach((row) => {
-          playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos });
-          // Below the full cap hit outside the minors = salary retained by a former team.
-          if (kind !== "minors" && row.totalCap > row.adjustedCap) retention.set(`SR_${row.spotracId}`, row.totalCap - row.adjustedCap);
-        })
+        parsed[kind].forEach((row) => playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos }))
       );
       refreshed++;
     } catch (error) {
@@ -788,7 +801,23 @@ async function main() {
     await sleep(REQUEST_DELAY_MS);
 
     try {
-      const { page, sheets } = await scrapeYearlyPage(teamSource, futureSeasons, maxSalary, retention);
+      yearlyPages.set(abbr, await scrapeYearlyPage(teamSource));
+    } catch (error) {
+      failures.push(`${abbr} multi-year`);
+      console.error(`!! ${abbr} multi-year FAILED: ${error.message} (keeping last-known-good future sheets)`);
+    }
+    if (i < sources.length - 1) await sleep(REQUEST_DELAY_MS);
+  }
+
+  // Future sheets need every team's Retained table, so they are built once all
+  // multi-year pages are in. A single-team run only sees its own page.
+  const retainedElsewhere = retainedByPlayer(yearlyPages);
+  sources.forEach((teamSource) => {
+    const abbr = teamSource.abbr;
+    const page = yearlyPages.get(abbr);
+    if (!page) return;
+    try {
+      const sheets = buildFutureSheets(teamSource, page, futureSeasons, maxSalary, retainedElsewhere);
       futureSeasons.forEach((s) => setSheet(data.capSheets[s], abbr, sheets[s]));
       page.rows.forEach((row) => {
         if (row.kind === "buyout" || row.kind === "retained") return;
@@ -808,8 +837,7 @@ async function main() {
       failures.push(`${abbr} multi-year`);
       console.error(`!! ${abbr} multi-year FAILED: ${error.message} (keeping last-known-good future sheets)`);
     }
-    if (i < sources.length - 1) await sleep(REQUEST_DELAY_MS);
-  }
+  });
 
   if (refreshed === 0) {
     throw new Error(`Every page failed — leaving ${path.basename(DATA_PATH)} untouched.`);

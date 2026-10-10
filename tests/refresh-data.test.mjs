@@ -246,7 +246,7 @@ test("a new cap hit for the same player starts a new contract", () => {
 });
 
 test("a player another team retains salary on counts for his reduced cap hit", () => {
-  const retention = new Map([["SR_20276", 3_250_000]]);
+  const retention = new Map([["SR_20276", { "2027-28": 3_250_000 }]]);
   const sheets = buildFutureSheets(team, parseYearlyPage(yearly.replace("$46,287,500", "$43,037,500")), FUTURE, noLimit, retention);
   const matthews = sheets["2027-28"].items.find((item) => item.playerId === "SR_20276");
   assert.deepEqual([matthews.capHit, matthews.aav], [10_000_000, 13_250_000]);
@@ -258,4 +258,11 @@ test("an RFA badge followed by a new contract keeps the new contract's first cap
   assert.deepEqual(celebrini.capHits, { "2026-27": 975000, "2027-28": 18800000, "2028-29": 18800000, "2029-30": 18800000 });
   assert.deepEqual(celebrini.expiries, [{ season: "2027-28", status: "RFA" }]);
   assert.deepEqual(celebrini.clauses, { "2029-30": "NMC" });
+});
+
+test("a future season slightly above Spotrac's projected total is kept and noted", () => {
+  const sheets = buildFutureSheets(team, parseYearlyPage(yearly.replace("$46,287,500", "$44,000,000")), FUTURE, noLimit);
+  const sheet = sheets["2027-28"];
+  assert.ok(!sheet.adjustments.some((adj) => adj.category === "buried"));
+  assert.ok(sheet.notes.includes("Contracts listed total $937,500 more than Spotrac's projected total cap."));
 });
