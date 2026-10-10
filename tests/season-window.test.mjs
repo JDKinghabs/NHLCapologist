@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { contractSeasons, currentSeason, rollSeasonWindow, seasonAt } from "../scripts/season-window.mjs";
+import { applyCapCeilings, contractSeasons, currentSeason, rollSeasonWindow, seasonAt } from "../scripts/season-window.mjs";
 
 test("formats seasons across century boundaries", () => {
   assert.equal(seasonAt("2026-27", 1), "2027-28");
@@ -64,4 +64,14 @@ test("rolling to the season it already starts at changes nothing", () => {
   const data = sampleData();
   rollSeasonWindow(data, "2026-27");
   assert.ok(!rollSeasonWindow(data, "2026-27"));
+});
+
+test("published ceilings replace projections; later seasons project from the last one", () => {
+  const data = sampleData();
+  rollSeasonWindow(data, "2026-27");
+  applyCapCeilings(data.meta, { "2026-27": 999, "2027-28": 113_500_000, "2028-29": 127_500_000, "2029-30": null });
+  assert.equal(data.meta.caps["2026-27"].ceiling, 104_000_000);
+  assert.deepEqual(data.meta.caps["2028-29"], { ceiling: 127_500_000, floor: 94_200_000, projected: true });
+  assert.deepEqual(data.meta.caps["2029-30"], { ceiling: 131_000_000, floor: 96_800_000, projected: true });
+  assert.equal(data.meta.caps["2033-34"].ceiling, 145_000_000);
 });
