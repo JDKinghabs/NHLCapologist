@@ -1,6 +1,7 @@
 name: Refresh cap data
 
-# Re-scrapes Spotrac and commits an updated data/nhl-cap-data.json.
+# Re-scrapes Spotrac for the current season and commits data/nhl-cap-data.json
+# when the cap data actually changed (days with no changes produce no commit).
 # The commit (pushed to main) triggers the Cloudflare Pages redeploy.
 
 on:
@@ -22,12 +23,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Refresh data from Spotrac
         run: node scripts/refresh-data.js
