@@ -30,6 +30,7 @@ const TARGET_ABBR = (process.argv[2] || "").toUpperCase();
 const DEBUG_ABBR = (process.env.SPOTRAC_DEBUG || "").toUpperCase();
 const DEBUG_PLAYER = process.env.SPOTRAC_DEBUG_PLAYER || "";
 const DRY_RUN = process.env.REFRESH_DRY_RUN === "true";
+const DEBUG_URLS = (process.env.SPOTRAC_DEBUG_URL || "").split(",").map((url) => url.trim()).filter(Boolean);
 
 const REQUEST_DELAY_MS = Number(process.env.REQUEST_DELAY_MS) || 1500;
 const MAX_RETRIES = Number(process.env.MAX_RETRIES) || 3;
@@ -111,7 +112,10 @@ function sleep(ms) {
 }
 
 async function fetchSpotracHtml(teamSource) {
-  const url = `https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${YEAR}`;
+  return fetchUrl(`https://www.spotrac.com/nhl/${teamSource.slug}/cap/_/year/${YEAR}`);
+}
+
+async function fetchUrl(url) {
   let lastError;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     const controller = new AbortController();
@@ -206,6 +210,29 @@ function dumpMarkup(html, abbr) {
     if (DEBUG_PLAYER) {
       rows.filter((row) => row.includes(DEBUG_PLAYER)).forEach((row) => console.log(`[debug ${abbr}] MATCH ${squash(row)}`));
     }
+  }
+}
+
+// SPOTRAC_DEBUG_URL=<url>[,<url>...] fetches arbitrary Spotrac pages and
+// prints their headings and every table's header and first rows, to explore
+// pages the refresh doesn't read yet. Nothing else runs.
+async function dumpPages(urls) {
+  const squash = (text) => text.replace(/\s+/g, " ").trim().slice(0, 2500);
+  for (const url of urls) {
+    try {
+      const html = await fetchUrl(url);
+      const headings = Array.from(html.matchAll(/<h[1-4][^>]*>([\s\S]*?)<\/h[1-4]>/gi)).map((m) => squash(stripTags(m[1]))).filter(Boolean);
+      console.log(`[debug-url ${url}] ${html.length} bytes | headings: ${headings.join(" | ").slice(0, 2500)}`);
+      for (const [, attrs, tableHtml] of html.matchAll(/<table([^>]*)>([\s\S]*?)<\/table>/gi)) {
+        const thead = (tableHtml.match(/<thead>([\s\S]*?)<\/thead>/i) || [])[1] || "";
+        const rows = (tableHtml.match(/<tbody>([\s\S]*?)<\/tbody>/i)?.[1] || tableHtml).match(/<tr[\s\S]*?<\/tr>/gi) || [];
+        console.log(`[debug-url] TABLE${squash(attrs)} rows=${rows.length} | THEAD ${squash(stripTags(thead.replace(/<\/th>/gi, " | </th>")))}`);
+        rows.slice(0, 2).forEach((row) => console.log(`[debug-url] ROW ${squash(row)}`));
+      }
+    } catch (error) {
+      console.log(`[debug-url ${url}] ${error.message}`);
+    }
+    await sleep(REQUEST_DELAY_MS);
   }
 }
 
@@ -515,6 +542,7 @@ function writeDataAtomic(data) {
 }
 
 async function main() {
+  if (DEBUG_URLS.length) return dumpPages(DEBUG_URLS);
   const data = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
   const before = JSON.stringify(data);
   data.meta = data.meta || {};

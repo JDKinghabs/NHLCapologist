@@ -22,6 +22,10 @@ on:
         description: "Refresh this season instead of the current one (e.g. 2027-28)"
         required: false
         default: ""
+      debug_url:
+        description: "Only fetch and print these Spotrac URLs (comma-separated); no refresh"
+        required: false
+        default: ""
       dry_run:
         description: "Scrape and log, but don't write or commit the data"
         type: boolean
@@ -55,6 +59,7 @@ jobs:
           SPOTRAC_DEBUG_PLAYER: ${{ inputs.debug_player }}
           SEASON: ${{ inputs.season }}
           REFRESH_DRY_RUN: ${{ inputs.dry_run }}
+          SPOTRAC_DEBUG_URL: ${{ inputs.debug_url }}
 
       - name: Commit & push if changed
         run: |
