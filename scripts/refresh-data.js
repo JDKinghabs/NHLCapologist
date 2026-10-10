@@ -1,8 +1,7 @@
 // Refresh data/nhl-cap-data.json by re-scraping Spotrac cap pages.
 //
-// Cloud/Linux-portable port of import-spotrac-cap-sheets.js:
-//   - uses Node's global fetch() instead of shelling out to curl.exe
-//   - resolves the data file relative to the repo (no hardcoded C:/ path)
+// It:
+//   - rolls the season window forward on July 1 (see season-window.mjs)
 //   - throttles + retries the 32 team requests
 //   - writes atomically (temp file + rename) so a partial/failed scrape can
 //     never corrupt the existing ~1 MB JSON; teams that fail keep their
@@ -13,19 +12,14 @@
 // Usage:
 //   node scripts/refresh-data.js            # all 32 teams, current season
 //   node scripts/refresh-data.js TOR        # single team
-//   SEASON=2025-26 node scripts/refresh-data.js   # a specific season
+//   SEASON=2027-28 node scripts/refresh-data.js   # another season in the window
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { contractSeasons, currentSeason, rollSeasonWindow } from "./season-window.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.resolve(__dirname, "..", "data", "nhl-cap-data.json");
-
-// The NHL league year (and Spotrac's cap pages) rolls over on July 1.
-function currentSeason(date = new Date()) {
-  const year = date.getUTCMonth() >= 6 ? date.getUTCFullYear() : date.getUTCFullYear() - 1;
-  return `${year}-${String((year + 1) % 100).padStart(2, "0")}`;
-}
 
 const SEASON = process.env.SEASON || currentSeason();
 const YEAR = Number(process.env.YEAR) || Number(SEASON.slice(0, 4));
@@ -107,17 +101,6 @@ function parseMoneyText(text) {
 
 function stripTags(text) {
   return decodeHtml(String(text || "").replace(/<[^>]+>/g, " "));
-}
-
-function buildSeasonList(startSeason, years, seasons) {
-  if (!startSeason || !years) return [];
-  const idx = seasons.indexOf(startSeason);
-  if (idx === -1) return [];
-  return seasons.slice(idx, idx + years);
-}
-
-function isActiveSeason(contract, season, seasons) {
-  return buildSeasonList(contract.startSeason, contract.years, seasons).includes(season);
 }
 
 function sleep(ms) {
@@ -359,9 +342,8 @@ function ensurePlayer(data, playerIndex, row) {
 }
 
 function ensureSeasonContract(data, playerId, teamAbbr, row) {
-  const seasons = data.meta?.seasons || [];
   let contract = (data.contracts || []).find(
-    (entry) => entry.playerId === playerId && entry.team === teamAbbr && isActiveSeason(entry, SEASON, seasons)
+    (entry) => entry.playerId === playerId && entry.team === teamAbbr && contractSeasons(entry).includes(SEASON)
   );
 
   if (!contract) {
@@ -462,6 +444,8 @@ async function main() {
   const data = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
   const before = JSON.stringify(data);
   data.meta = data.meta || {};
+  // On July 1 the finished season drops off and a new final season is added.
+  if ((data.meta.seasons?.[0] || "") < currentSeason()) rollSeasonWindow(data, currentSeason());
   const seasons = data.meta.seasons || [];
   if (!seasons.includes(SEASON)) {
     throw new Error(`Season ${SEASON} is not in meta.seasons (${seasons.join(", ")}) — add it before refreshing.`);
@@ -512,11 +496,6 @@ async function main() {
 
   if (report.length === 0) {
     throw new Error(`All ${sources.length} team(s) failed to refresh — leaving ${path.basename(DATA_PATH)} untouched.`);
-  }
-
-  // Once the new league year's sheets are in, make it the app's default view.
-  if (SEASON === currentSeason() && seasons.indexOf(SEASON) > seasons.indexOf(data.meta.defaultSeason)) {
-    data.meta.defaultSeason = SEASON;
   }
 
   if (JSON.stringify(data) === before) {
