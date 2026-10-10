@@ -229,6 +229,9 @@ async function dumpPages(urls) {
           rows.forEach((row) => console.log(`[debug-url] SUMMARY ${squash(stripTags(row.replace(/<\/td>/gi, " | </td>")))}`));
         } else {
           rows.slice(0, 2).forEach((row) => console.log(`[debug-url] ROW ${squash(row)}`));
+          if (DEBUG_PLAYER) {
+            rows.filter((row) => row.includes(DEBUG_PLAYER)).forEach((row) => console.log(`[debug-url] MATCH ${row.replace(/\s+/g, " ").slice(0, 6000)}`));
+          }
         }
       }
     } catch (error) {
