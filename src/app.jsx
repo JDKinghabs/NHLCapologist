@@ -18,31 +18,32 @@ function fmtM(n) {
   return "$" + (num/1_000_000).toFixed(2) + "M";
 }
 
-function seasonIndex(season, seasons) {
-  return seasons.indexOf(season);
+// Contract seasons come from the start year, so contracts that began before
+// the site's first season still resolve correctly.
+function seasonAt(season, offset) {
+  const start = Number(season.slice(0, 4)) + offset;
+  return `${start}-${String((start + 1) % 100).padStart(2, "0")}`;
 }
 
-function buildSeasonList(startSeason, years, seasons) {
+function buildSeasonList(startSeason, years) {
   if(!startSeason || !years) return [];
-  const startIdx = seasonIndex(startSeason, seasons);
-  if(startIdx === -1) return [];
-  return seasons.slice(startIdx, startIdx + years);
+  return Array.from({ length: years }, (_, i) => seasonAt(startSeason, i));
 }
 
-function isActiveSeason(contract, season, seasons) {
-  const list = buildSeasonList(contract.startSeason, contract.years, seasons);
+function isActiveSeason(contract, season) {
+  const list = buildSeasonList(contract.startSeason, contract.years);
   return list.includes(season);
 }
 
-function capHitFor(contract, season, seasons) {
-  if(!isActiveSeason(contract, season, seasons)) return 0;
+function capHitFor(contract, season) {
+  if(!isActiveSeason(contract, season)) return 0;
   if(contract.capHits && contract.capHits[season] != null) return contract.capHits[season];
   if(contract.aav != null) return contract.aav;
   return 0;
 }
 
-function totalValueFor(contract, seasons) {
-  const list = buildSeasonList(contract.startSeason, contract.years, seasons);
+function totalValueFor(contract) {
+  const list = buildSeasonList(contract.startSeason, contract.years);
   if(contract.capHits) {
     return list.reduce((s, season) => s + safeNum(contract.capHits[season]), 0);
   }
@@ -50,15 +51,15 @@ function totalValueFor(contract, seasons) {
   return 0;
 }
 
-function yearsLeftFor(contract, season, seasons) {
-  const list = buildSeasonList(contract.startSeason, contract.years, seasons);
+function yearsLeftFor(contract, season) {
+  const list = buildSeasonList(contract.startSeason, contract.years);
   const idx = list.indexOf(season);
   if(idx === -1) return 0;
   return list.length - idx;
 }
 
-function endSeasonFor(contract, seasons) {
-  const list = buildSeasonList(contract.startSeason, contract.years, seasons);
+function endSeasonFor(contract) {
+  const list = buildSeasonList(contract.startSeason, contract.years);
   return list.length ? list[list.length - 1] : "";
 }
 
@@ -79,10 +80,10 @@ function getSeasonCapSheet(data, season, teamAbbr) {
   return data?.capSheets?.[season]?.[teamAbbr] || null;
 }
 
-function buildPlayerRow(contract, player, season, seasons, item={}) {
-  const total = totalValueFor(contract, seasons);
-  const yearsLeft = yearsLeftFor(contract, season, seasons);
-  const endSeason = endSeasonFor(contract, seasons);
+function buildPlayerRow(contract, player, season, item={}) {
+  const total = totalValueFor(contract);
+  const yearsLeft = yearsLeftFor(contract, season);
+  const endSeason = endSeasonFor(contract);
   const aav = contract.aav != null ? contract.aav : (total && contract.years ? total / contract.years : 0);
 
   return {
@@ -91,7 +92,7 @@ function buildPlayerRow(contract, player, season, seasons, item={}) {
     name: player.name,
     pos: player.pos || "-",
     age: player.age || "-",
-    capHit: item.capHit != null ? safeNum(item.capHit) : capHitFor(contract, season, seasons),
+    capHit: item.capHit != null ? safeNum(item.capHit) : capHitFor(contract, season),
     aav,
     years: yearsLeft,
     total,
@@ -110,14 +111,13 @@ function summarizeAdjustmentBuckets(adjustments) {
 }
 
 function buildTeamData(data, season, capCeiling) {
-  const seasons = data.meta?.seasons || [];
   const playersById = Object.fromEntries((data.players || []).map(p => [p.id, p]));
   const contractsByTeam = {};
   const contractLookup = {};
 
   (data.contracts || []).forEach((contract) => {
-    if(!isActiveSeason(contract, season, seasons)) return;
-    const capHit = capHitFor(contract, season, seasons);
+    if(!isActiveSeason(contract, season)) return;
+    const capHit = capHitFor(contract, season);
     if(capHit <= 0) return;
     if(!contractsByTeam[contract.team]) contractsByTeam[contract.team] = [];
     contractsByTeam[contract.team].push(contract);
@@ -136,13 +136,13 @@ function buildTeamData(data, season, capCeiling) {
         const contract = contractLookup[`${team.abbr}:${item.playerId}`];
         if(!contract) return;
         const player = playersById[item.playerId] || { name: item.playerId || "Unknown", pos: "-" };
-        const row = buildPlayerRow(contract, player, season, seasons, item);
+        const row = buildPlayerRow(contract, player, season, item);
         if(row.capHit > 0) roster.push(row);
       });
     } else {
       (contractsByTeam[team.abbr] || []).forEach((contract) => {
         const player = playersById[contract.playerId] || { name: contract.playerId || "Unknown", pos: "-" };
-        const row = buildPlayerRow(contract, player, season, seasons);
+        const row = buildPlayerRow(contract, player, season);
         if(row.capHit > 0) roster.push(row);
       });
     }
@@ -589,7 +589,7 @@ function ProjectionsView({ teamData, data, capCeiling }) {
     return (data.contracts || [])
       .filter(c => c.team === teamAbbr)
       .filter(c => {
-        const list = buildSeasonList(c.startSeason, c.years, s);
+        const list = buildSeasonList(c.startSeason, c.years);
         return list.includes(season) && !list.includes(nextSeason);
       })
       .map(c => {
