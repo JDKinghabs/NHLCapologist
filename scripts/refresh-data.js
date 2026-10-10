@@ -194,6 +194,7 @@ function classifySection(title) {
   if (/long[- ]term|ltir/.test(t)) return "ltir";
   if (t.includes("injured")) return "ir";
   if (/non[- ]roster/.test(t)) return "nonRoster";
+  if (/reserve|suspended/.test(t)) return "reserve";
   if (t.includes("minor")) return "minors";
   if (t.includes("active")) return "active";
   if (/dead|termination|recapture/.test(t)) return "other";
@@ -265,7 +266,7 @@ function parseCapTotals(html) {
   return rows;
 }
 
-const PLAYER_KINDS = ["active", "ir", "ltir", "nonRoster", "minors"];
+const PLAYER_KINDS = ["active", "ir", "ltir", "nonRoster", "reserve", "minors"];
 const ADJUSTMENT_KINDS = { buyout: "buyout", retained: "retainedSalary", other: "other" };
 
 function parseTeamPage(teamSource, html) {
@@ -465,6 +466,7 @@ async function main() {
       const skippedTotal = dropped.reduce((total, row) => total + row.adjustedCap, 0);
       if (spotracTotal && Math.abs(sheetTotal + skippedTotal - spotracTotal) > 1000) {
         console.warn(`  ${teamSource.abbr}: imported ${fmtMoney(sheetTotal)} but Spotrac reports ${fmtMoney(spotracTotal)} total allocations`);
+        console.warn(`    Cap Totals: ${Object.entries(parsed.totals).map(([label, value]) => `${label}=${value}`).join("; ")}`);
       }
     } catch (error) {
       failures.push({ abbr: teamSource.abbr, message: error.message });
