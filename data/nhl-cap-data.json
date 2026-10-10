@@ -11092,7 +11092,8 @@
       "years": 4,
       "aav": 9500000,
       "capHits": {
-        "2025-26": 9500000
+        "2025-26": 9500000,
+        "2026-27": 9500000
       },
       "source": "Spotrac"
     },
@@ -12929,7 +12930,8 @@
       "years": 5,
       "aav": 8500000,
       "capHits": {
-        "2025-26": 8500000
+        "2025-26": 8500000,
+        "2026-27": 0
       },
       "source": "Spotrac"
     },
@@ -46818,6 +46820,18 @@
         "2026-27": 0
       },
       "source": "Spotrac"
+    },
+    {
+      "playerId": "SR_62885",
+      "team": "OTT",
+      "type": "UFA",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 3250000,
+      "capHits": {
+        "2026-27": 3250000
+      },
+      "source": "Spotrac"
     }
   ],
   "standings": {
@@ -60692,6 +60706,12 @@
           },
           {
             "kind": "player",
+            "playerId": "BOS_73",
+            "category": "reserve",
+            "capHit": 9500000
+          },
+          {
+            "kind": "player",
             "playerId": "BUF_4",
             "category": "minors",
             "capHit": 1775000,
@@ -62232,6 +62252,12 @@
             "playerId": "SR_11274",
             "category": "ir",
             "capHit": 1150000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_62885",
+            "category": "reserve",
+            "capHit": 3250000
           },
           {
             "kind": "player",
@@ -67742,6 +67768,12 @@
             "playerId": "SR_76281",
             "category": "active",
             "capHit": 850000
+          },
+          {
+            "kind": "player",
+            "playerId": "WPG_37",
+            "category": "reserve",
+            "capHit": 0
           },
           {
             "kind": "player",
