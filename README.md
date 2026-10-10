@@ -7,7 +7,12 @@ A static site that tracks every NHL team's salary cap for the current season and
 - **Trade Tool**: checks a trade against the cap, the 50-contract limit and retained-salary rules (up to 50%, at most 3 retained contracts per team).
 - **Projections**: each team's committed money against each season's ceiling, with pending free agents per season.
 
-Links are shareable: the URL holds the season, view and open team, e.g. `#/2026-27/dashboard/TOR`.
+Every view has its own address:
+- `/`, `/standings`, `/trade`, `/projections`;
+- `/teams/TOR` for a team's cap sheet;
+- `/2027-28/teams/TOR` for another season. The current season is left out, so `/teams/TOR` is a permanent link.
+
+Old `#/2026-27/dashboard/TOR` links still work: they're moved to the matching path.
 
 It runs on Cloudflare Pages (project `nhlcapologist`, <https://nhlcapologist.pages.dev>).
 
@@ -83,9 +88,11 @@ node scripts/refresh-standings.mjs
 | `index.html` | Page shell and all CSS |
 | `src/app.jsx` | The React app (views, cap sheet, trade tool, projections) |
 | `src/cap-math.js` | Contract and payroll math, shared with the validator |
-| `src/routes.js` | Shareable-link parsing |
+| `src/routes.js` | URL paths and page titles |
 | `data/nhl-cap-data.json` | All site data, written by the refresh scripts |
-| `scripts/build.mjs` | esbuild bundle (React included, so no third-party scripts) + copy to `dist/` |
+| `scripts/build.mjs` | esbuild bundle (React included, so no third-party scripts), static pages, sitemap; sets `SITE_URL` |
+| `scripts/prerender.mjs` | A static page per team and view, plus the sitemap and robots.txt, for search engines |
+| `scripts/static-server.mjs` | Local server that routes like Cloudflare Pages (used by `npm run serve` and the smoke test) |
 | `scripts/refresh-data.js` | Spotrac scraper |
 | `scripts/refresh-standings.mjs` | NHL standings and team names |
 | `scripts/season-window.mjs` | Season window, July 1 rollover, projected ceilings |
@@ -106,6 +113,21 @@ node scripts/refresh-standings.mjs
 - `capSheets[season][team]`: player items and charges, plus notes recording Spotrac's totals;
 - `standings[currentSeason][team]`: games played, wins, losses and OT losses.
 
+## Search engines and analytics
+
+**Static pages.** `npm run build` writes a static page for every team (`dist/teams/TOR.html`, served at `/teams/TOR`) and every view. Each has:
+- its own title, description and canonical link;
+- a plain summary that search engines and link previews read. The app replaces it when it loads.
+
+It also writes `sitemap.xml` and `robots.txt`.
+
+**`SITE_URL`.** The canonical links and sitemap use `SITE_URL`, set at the top of `scripts/build.mjs` (default `https://nhlcapologist.pages.dev`). Change it when the site moves to its own domain.
+
+**Analytics.** Viewership is tracked with Cloudflare Web Analytics, which is free and sets no cookies:
+- Enable it in the Cloudflare dashboard: Workers & Pages → `nhlcapologist` → Metrics → Web Analytics.
+- Pages adds the tracking snippet itself on the next deploy.
+- In-app navigation counts as page views, because the app changes the URL with `history.pushState`.
+
 ## Deploying
 
 Cloudflare Pages builds `main` on every push and builds a preview for every pull request.
@@ -114,6 +136,7 @@ Cloudflare Pages builds `main` on every push and builds a preview for every pull
 |---|---|
 | Build command | `npm run build` |
 | Build output directory | `dist` |
+| `404.html` | none, so Pages serves `index.html` for paths without their own page and the app routes them |
 | Production branch | `main` |
 | Environment variable | `NODE_VERSION` = `22` (if the default is older) |
 

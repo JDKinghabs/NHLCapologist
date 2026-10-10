@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { buildSeasonList, buildTeamData, safeNum, seasonAt } from "./cap-math.js";
-import { parseRoute, routeHash } from "./routes.js";
+import { pageTitle, parseRoute, routePath } from "./routes.js";
 
 // Enter or Space activates a clickable element that isn't a native button.
 function onActivateKey(handler) {
@@ -37,18 +37,18 @@ function getSpaceColor(space) {
   return "low-cap";
 }
 
-function TeamCard({ team, capCeiling, selected, onClick }) {
+function TeamCard({ team, capCeiling, selected, link }) {
   const pct = capCeiling ? Math.min((team.payroll / capCeiling) * 100, 105) : 0;
   const div = team.division || "—";
   const F = team.roster.filter(p=>["C","LW","RW","F"].includes(p.pos)).length;
   const D = team.roster.filter(p=>p.pos==="D").length;
   const G = team.roster.filter(p=>p.pos==="G").length;
   return (
-    <div className={`team-card ${selected?"selected":""}`}
-         style={{"--team-color": team.color}}
-         role="button" tabIndex={0} aria-expanded={selected}
-         aria-label={`${team.name}, ${team.space < 0 ? "-" : "+"}${fmt(Math.abs(team.space), true)} cap space: cap sheet`}
-         onClick={onClick} onKeyDown={onActivateKey(onClick)}>
+    <a className={`team-card ${selected?"selected":""}`}
+       style={{"--team-color": team.color}}
+       aria-current={selected ? "true" : undefined}
+       aria-label={`${team.name}, ${team.space < 0 ? "-" : "+"}${fmt(Math.abs(team.space), true)} cap space: cap sheet`}
+       {...link}>
       <div className="card-header">
         <div className="team-abbr" style={{color: team.color}}>{team.abbr}</div>
         <div className="team-name-block">
@@ -87,7 +87,7 @@ function TeamCard({ team, capCeiling, selected, onClick }) {
         <div className="roster-pill"><span>{D}</span>D</div>
         <div className="roster-pill"><span>{G}</span>G</div>
       </div>
-    </div>
+    </a>
   );
 }
 
@@ -815,7 +815,7 @@ function App() {
   const [sortMode, setSortMode] = useState("space");
 
   useEffect(() => {
-    fetch("data/nhl-cap-data.json", { cache: "no-store" })
+    fetch("/data/nhl-cap-data.json", { cache: "no-store" })
       .then(r => {
         if(!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
@@ -824,24 +824,44 @@ function App() {
       .catch(err => setLoadError(err.message || "Failed to load data"));
   }, []);
 
-  // The URL hash is the source of truth for the season, view and open team,
-  // so links can be shared and the back button works.
-  useEffect(() => {
-    if (!data) return;
-    const ctx = {
-      seasons: data.meta?.seasons || [],
-      teams: (data.teams || []).map(t => t.abbr),
-      defaultSeason: data.meta?.defaultSeason || data.meta?.seasons?.[0] || "",
-    };
-    const sync = () => setRoute(parseRoute(window.location.hash, ctx));
-    sync();
-    window.addEventListener("hashchange", sync);
-    return () => window.removeEventListener("hashchange", sync);
+  const routeCtx = useMemo(() => data && {
+    seasons: data.meta?.seasons || [],
+    teams: (data.teams || []).map(t => t.abbr),
+    defaultSeason: data.meta?.defaultSeason || data.meta?.seasons?.[0] || "",
   }, [data]);
 
+  // The URL path is the source of truth for the season, view and open team,
+  // so links can be shared and the back button works.
+  useEffect(() => {
+    if (!routeCtx) return;
+    // Links from before path URLs ("#/2026-27/dashboard/TOR") move into the path.
+    if (window.location.hash.startsWith("#/")) {
+      window.history.replaceState(null, "", routePath(parseRoute(window.location.hash, routeCtx), routeCtx.defaultSeason));
+    }
+    const sync = () => setRoute(parseRoute(window.location.pathname, routeCtx));
+    sync();
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, [routeCtx]);
+
   function navigate(patch) {
-    const hash = routeHash({ ...route, ...patch });
-    if (hash !== window.location.hash) window.location.hash = hash;
+    const next = { ...route, ...patch };
+    const path = routePath(next, routeCtx.defaultSeason);
+    if (path === window.location.pathname) return;
+    window.history.pushState(null, "", path);
+    setRoute(parseRoute(path, routeCtx));
+  }
+
+  // A real link to the route (crawlable, opens in a new tab) that navigates in place on a plain click.
+  function linkTo(patch) {
+    return {
+      href: routePath({ ...route, ...patch }, routeCtx.defaultSeason),
+      onClick: (e) => {
+        if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        navigate(patch);
+      },
+    };
   }
 
   const season = route?.season || "";
@@ -857,11 +877,8 @@ function App() {
   const selectedTeam = useMemo(() => teamData.find(t => t.abbr === selectedTeamAbbr) || null, [teamData, selectedTeamAbbr]);
 
   useEffect(() => {
-    if (!route) return;
-    const label = selectedTeam ? `${selectedTeam.name} cap sheet`
-      : { dashboard: "NHL Salary Cap Tracker", standings: "Standings and payrolls", trade: "Trade tool", projections: "Cap projections" }[view];
-    document.title = `${label} · ${season} · IceCap`;
-  }, [route, selectedTeam, view, season]);
+    if (route) document.title = pageTitle(route, selectedTeam?.name);
+  }, [route, selectedTeam]);
 
   const filtered = useMemo(() => {
     let t = teamData;
@@ -890,7 +907,7 @@ function App() {
     return (
       <div className="loading-state">
         <h2>Loading Cap Data</h2>
-        <p>Fetching {"data/nhl-cap-data.json"}...</p>
+        <p>Fetching the latest cap data...</p>
       </div>
     );
   }
@@ -906,7 +923,7 @@ function App() {
     <div>
       <header className="header">
         <div className="header-inner">
-          <a className="logo" href="#/" aria-label="IceCap home">
+          <a className="logo" aria-label="IceCap home" {...linkTo({ season: routeCtx.defaultSeason, view: "dashboard", team: null })}>
             <div className="logo-dot"/>
             ICE<span className="logo-ice">CAP</span>
           </a>
@@ -922,8 +939,8 @@ function App() {
           </div>
           <nav className="header-nav" aria-label="Sections">
             {[["dashboard","Dashboard"],["standings","Standings"],["trade","Trade",<span className="nav-extra"> Tool</span>],["projections","Projections"]].map(([v, l, extra]) => (
-              <button key={v} className={`nav-btn ${view===v?"active":""}`} aria-current={view===v ? "page" : undefined}
-                      onClick={()=>navigate({ view: v, team: null })}>{l}{extra}</button>
+              <a key={v} className={`nav-btn ${view===v?"active":""}`} aria-current={view===v ? "page" : undefined}
+                 {...linkTo({ view: v, team: null })}>{l}{extra}</a>
             ))}
           </nav>
         </div>
@@ -994,7 +1011,7 @@ function App() {
                 team={team}
                 capCeiling={capCeiling}
                 selected={selectedTeam?.abbr===team.abbr}
-                onClick={()=>handleTeamClick(team)}
+                link={linkTo({ team: selectedTeam?.abbr === team.abbr ? null : team.abbr })}
               />
             ))}
           </div>

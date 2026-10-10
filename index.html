@@ -589,7 +589,8 @@
   .error-state p { color: var(--text3); }
 
   a { color: inherit; }
-  .logo { text-decoration: none; }
+  .logo, .nav-btn, a.team-card { text-decoration: none; }
+  a.team-card { display: block; color: inherit; }
   /* Keyboard focus */
   a:focus-visible, button:focus-visible, select:focus-visible,
   input:focus-visible, [tabindex]:focus-visible {
@@ -602,6 +603,16 @@
     position: sticky; left: 0; z-index: 1; background: inherit;
   }
   .nav-btn, .filter-btn { white-space: nowrap; }
+
+  /* STATIC SUMMARY (shown to crawlers, and briefly before the app loads) */
+  .prerender { max-width: 900px; margin: 32px auto; padding: 0 16px; line-height: 1.5; }
+  .prerender h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; margin-bottom: 8px; }
+  .prerender p, .prerender ul { margin-bottom: 12px; }
+  .prerender ul { padding-left: 20px; }
+  .prerender table { border-collapse: collapse; width: 100%; margin-bottom: 12px; }
+  .prerender caption { text-align: left; font-weight: 600; padding-bottom: 6px; }
+  .prerender th, .prerender td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .prerender a { color: var(--ice2); }
 
   /* FOOTER */
   .site-footer {
@@ -643,6 +654,6 @@
 </head>
 <body>
 <div id="root"></div>
-<script src="app.js"></script>
+<script src="/app.js"></script>
 </body>
 </html>
