@@ -1,9 +1,13 @@
 name: Refresh cap data
 
 # Re-scrapes Spotrac (each team's current cap page and multi-year page), refreshes
-# standings from the NHL API, and commits data/nhl-cap-data.json
-# when the cap data actually changed (days with no changes produce no commit).
-# The commit (pushed to main) triggers the Cloudflare Pages redeploy.
+# standings from the NHL API, validates the result, and commits
+# data/nhl-cap-data.json when it actually changed (days with no changes produce
+# no commit). The commit (pushed to main) triggers the Cloudflare Pages redeploy.
+#
+# Failures: if some teams or the NHL API fail, whatever succeeded is still
+# committed and the run is then marked failed, so GitHub emails the owner. If
+# the data fails validation, nothing is committed.
 
 on:
   schedule:
@@ -50,7 +54,10 @@ jobs:
           node-version: "24"
 
       - name: Refresh data from Spotrac
+        id: cap
         run: node scripts/refresh-data.js
+        # Exit 2 means some pages failed but the rest were written; commit those first.
+        continue-on-error: true
         env:
           SPOTRAC_DEBUG: ${{ inputs.debug_team }}
           SPOTRAC_DEBUG_PLAYER: ${{ inputs.debug_player }}
@@ -58,11 +65,15 @@ jobs:
           SPOTRAC_DEBUG_URL: ${{ inputs.debug_url }}
 
       - name: Refresh standings from the NHL API
+        id: standings
         run: node scripts/refresh-standings.mjs
         # Cap data still gets committed if the NHL API is down.
         continue-on-error: true
         env:
           REFRESH_DRY_RUN: ${{ inputs.dry_run }}
+
+      - name: Validate data
+        run: node scripts/validate-data.mjs
 
       - name: Commit & push if changed
         run: |
@@ -76,3 +87,9 @@ jobs:
           else
             echo "No data changes — nothing to commit."
           fi
+
+      - name: Fail the run if a refresh step failed
+        if: steps.cap.outcome == 'failure' || steps.standings.outcome == 'failure'
+        run: |
+          echo "::error::Refresh incomplete (Spotrac: ${{ steps.cap.outcome }}, NHL standings: ${{ steps.standings.outcome }}). Whatever succeeded was committed; the step logs list what failed."
+          exit 1

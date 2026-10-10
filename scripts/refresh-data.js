@@ -658,8 +658,10 @@ function retainedByPlayer(pages) {
 }
 
 // Contracts are derived from the cap sheets: a player's consecutive seasons
-// with one team at one cap hit form one contract. Expiry status (UFA/RFA)
-// comes from the multi-year page's badge in the season after the last one.
+// with one team at one cap hit form one contract. A season where nothing
+// counts (a player on the reserve list, say) stays part of the contract
+// around it. Expiry status (UFA/RFA) comes from the multi-year page's badge
+// in the season after the last one.
 function rebuildPlayersAndContracts(data, playerInfo, expiries) {
   const seasonsByKey = new Map();
   data.meta.seasons.forEach((season) => {
@@ -679,10 +681,13 @@ function rebuildPlayersAndContracts(data, playerInfo, expiries) {
     let contract = null;
     entries.forEach(({ season, item }) => {
       const aav = item.aav ?? item.capHit;
-      if (!contract || seasonAt(contract.startSeason, contract.years) !== season || contract.aav !== aav) {
+      const continues =
+        contract && seasonAt(contract.startSeason, contract.years) === season && (contract.aav === aav || !aav || !contract.aav);
+      if (!continues) {
         contract = { playerId, team, startSeason: season, years: 0, aav, capHits: {}, source: "Spotrac" };
         contracts.push(contract);
       }
+      if (!contract.aav) contract.aav = aav;
       contract.years += 1;
       contract.capHits[season] = item.capHit;
       if (item.clause && !contract.clause) contract.clause = item.clause;
@@ -696,10 +701,11 @@ function rebuildPlayersAndContracts(data, playerInfo, expiries) {
   data.contracts = contracts;
 
   const existing = new Map((data.players || []).map((player) => [player.id, player]));
-  data.players = [...new Set(contracts.map((contract) => contract.playerId))].map((id) => ({
-    ...(existing.get(id) || { id, name: id, pos: "", age: 0 }),
-    ...(playerInfo.get(id) || {}),
-  }));
+  data.players = [...new Set(contracts.map((contract) => contract.playerId))].map((id) => {
+    const player = { ...(existing.get(id) || { id, name: id, pos: "" }), ...(playerInfo.get(id) || {}) };
+    if (!(player.age > 0)) delete player.age; // Spotrac lists no age for some prospects
+    return player;
+  });
 }
 
 // The "Imported from Spotrac ... on <date>" note changes every run, so it is
@@ -850,13 +856,13 @@ async function main() {
   if (JSON.stringify(data) === before) {
     console.log(`\nNo changes from Spotrac — leaving ${path.basename(DATA_PATH)} untouched. ${summary}`);
     if (failures.length) console.log(`Failures (${failures.length}): ${failures.join(", ")}`);
-    return;
+    return failures;
   }
 
   if (DRY_RUN) {
     console.log(`\nDry run — not writing ${path.basename(DATA_PATH)}. ${summary}`);
     if (failures.length) console.log(`Failures (${failures.length}): ${failures.join(", ")}`);
-    return;
+    return failures;
   }
 
   data.meta.updated = FETCH_DATE;
@@ -867,6 +873,7 @@ async function main() {
 
   console.log(`\n${summary}`);
   if (failures.length) console.log(`Failures (${failures.length}): ${failures.join(", ")}`);
+  return failures;
 }
 
 export {
@@ -882,9 +889,16 @@ export {
   sameCapSheet,
 };
 
+// Exit codes: 0 all pages refreshed; 2 some pages failed (whatever succeeded
+// was still written, so the workflow commits it and then fails the run);
+// 1 nothing could be refreshed.
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  main().catch((error) => {
-    console.error(error.message);
-    process.exit(1);
-  });
+  main()
+    .then((failures) => {
+      if (failures?.length) process.exitCode = 2;
+    })
+    .catch((error) => {
+      console.error(error.message);
+      process.exit(1);
+    });
 }

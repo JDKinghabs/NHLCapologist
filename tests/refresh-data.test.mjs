@@ -245,6 +245,23 @@ test("a new cap hit for the same player starts a new contract", () => {
   assert.deepEqual(data.contracts.map((c) => [c.startSeason, c.years, c.aav]), [["2026-27", 1, 1e6], ["2027-28", 2, 5e6]]);
 });
 
+test("a season where nothing counts stays part of the contract around it", () => {
+  const sheet = (capHit) => ({ WPG: { items: [{ kind: "player", playerId: "SR_1", capHit }], adjustments: [] } });
+  const data = { meta: { seasons: ["2026-27", "2027-28", "2028-29"] }, capSheets: { "2026-27": sheet(0), "2027-28": sheet(8.5e6), "2028-29": sheet(8.5e6) }, players: [] };
+  rebuildPlayersAndContracts(data, new Map(), new Map());
+  assert.deepEqual(data.contracts.map((c) => [c.startSeason, c.years, c.aav, c.capHits["2026-27"]]), [["2026-27", 3, 8.5e6, 0]]);
+});
+
+test("a player with no known age gets no age, not zero", () => {
+  const data = {
+    meta: { seasons: ["2026-27"] },
+    capSheets: { "2026-27": { TOR: { items: [{ kind: "player", playerId: "SR_1", capHit: 9e5 }], adjustments: [] } } },
+    players: [{ id: "SR_1", name: "Old Record", pos: "C", age: 0 }],
+  };
+  rebuildPlayersAndContracts(data, new Map([["SR_1", { name: "New Prospect", pos: "LW" }]]), new Map());
+  assert.deepEqual(data.players, [{ id: "SR_1", name: "New Prospect", pos: "LW" }]);
+});
+
 test("a player another team retains salary on counts for his reduced cap hit", () => {
   const retention = new Map([["SR_20276", { "2027-28": 3_250_000 }]]);
   const sheets = buildFutureSheets(team, parseYearlyPage(yearly.replace("$46,287,500", "$43,037,500")), FUTURE, noLimit, retention);
