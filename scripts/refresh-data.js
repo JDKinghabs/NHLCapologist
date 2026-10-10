@@ -305,6 +305,22 @@ function dropImpossibleCapHits(parsed, maxSalary, abbr) {
   return dropped;
 }
 
+// Charges Spotrac lists only in its Cap Totals table, not as a section.
+function capTotalsCharges(totals) {
+  const charges = [];
+  Object.entries(totals).forEach(([label, value]) => {
+    const amount = parseMoneyText(value);
+    if (!amount) return;
+    if (/bonus/i.test(label) && /charge|overage/i.test(label)) {
+      charges.push({ label, category: "bonusOverage", amount });
+    } else if (label === "Adjustment") {
+      // A cut to this team's cap maximum; recorded as a charge so cap space matches Spotrac.
+      charges.push({ label: "Salary cap maximum adjustment", category: "other", amount: -amount });
+    }
+  });
+  return charges;
+}
+
 function fmtMoney(amount) {
   return `$${Math.round(amount).toLocaleString("en-US")}`;
 }
@@ -389,6 +405,16 @@ function buildCapSheet(teamSource, parsed, data, playerIndex, dropped) {
     });
   });
 
+  capTotalsCharges(parsed.totals).forEach((charge, idx) => {
+    adjustments.push({
+      id: `${teamSource.abbr}-totals-${idx + 1}`,
+      label: charge.label,
+      category: charge.category,
+      amount: charge.amount,
+      notes: "From Spotrac cap totals",
+    });
+  });
+
   const sectionSummary = parsed.sections.map((section) => `${section.title}=${section.sum}`).join("; ");
   const notes = [
     `Imported from Spotrac ${SEASON} cap table on ${FETCH_DATE}.`,
@@ -462,7 +488,9 @@ async function main() {
       const sheetTotal =
         sheet.items.reduce((total, item) => total + item.capHit, 0) +
         sheet.adjustments.reduce((total, adj) => total + adj.amount, 0);
-      const spotracTotal = parseMoneyText(parsed.totals["Total Allocations"]);
+      // Spotrac's total excludes the cap-maximum cut that the sheet records as a charge.
+      const spotracTotal =
+        parseMoneyText(parsed.totals["Total Allocations"]) - parseMoneyText(parsed.totals["Adjustment"]);
       const skippedTotal = dropped.reduce((total, row) => total + row.adjustedCap, 0);
       if (spotracTotal && Math.abs(sheetTotal + skippedTotal - spotracTotal) > 1000) {
         console.warn(`  ${teamSource.abbr}: imported ${fmtMoney(sheetTotal)} but Spotrac reports ${fmtMoney(spotracTotal)} total allocations`);
