@@ -483,6 +483,30 @@ function sameCapSheet(a, b) {
   return strip(a) === strip(b);
 }
 
+// Spotrac occasionally serves an alternate page (different tables, no
+// readable rows); those are refused, so a refused page is fetched once more.
+async function scrapeTeam(teamSource, maxSalary) {
+  const abbr = teamSource.abbr;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const html = await fetchSpotracHtml(teamSource);
+      if (DEBUG_ABBR === abbr) dumpMarkup(html, abbr);
+      const parsed = parseTeamPage(teamSource, html);
+      console.log(`${abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
+      parsed.unknown.forEach((section) =>
+        console.warn(`  ${abbr}: ignored unrecognized section "${section.title}" (${section.count} rows, ${fmtMoney(section.sum)})`)
+      );
+      const dropped = dropImpossibleCapHits(parsed, maxSalary, abbr);
+      checkAgainstSpotracTotals(parsed, dropped);
+      return { parsed, dropped };
+    } catch (error) {
+      if (attempt >= 2) throw error;
+      console.warn(`  ${abbr}: ${error.message} — fetching the page again`);
+      await sleep(REQUEST_DELAY_MS * 2);
+    }
+  }
+}
+
 function writeDataAtomic(data) {
   const tmpPath = `${DATA_PATH}.tmp`;
   fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf8");
@@ -530,15 +554,7 @@ async function main() {
     try {
       // Fetch + parse first (no mutation); only commit to `data` once parsing
       // fully succeeds, so a failure leaves this team's prior cap sheet intact.
-      const html = await fetchSpotracHtml(teamSource);
-      if (DEBUG_ABBR === teamSource.abbr) dumpMarkup(html, teamSource.abbr);
-      const parsed = parseTeamPage(teamSource, html);
-      console.log(`${teamSource.abbr}: ${parsed.sections.map((section) => `${section.title} (${section.count})`).join(", ")}`);
-      parsed.unknown.forEach((section) =>
-        console.warn(`  ${teamSource.abbr}: ignored unrecognized section "${section.title}" (${section.count} rows, ${fmtMoney(section.sum)})`)
-      );
-      const dropped = dropImpossibleCapHits(parsed, maxSalary, teamSource.abbr);
-      checkAgainstSpotracTotals(parsed, dropped);
+      const { parsed, dropped } = await scrapeTeam(teamSource, maxSalary);
       const sheet = buildCapSheet(teamSource, parsed, data, playerIndex, dropped);
       const prev = data.capSheets[SEASON][teamSource.abbr];
       if (!prev || !sameCapSheet(prev, sheet)) data.capSheets[SEASON][teamSource.abbr] = sheet;
