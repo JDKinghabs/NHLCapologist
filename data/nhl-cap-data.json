@@ -61782,7 +61782,15 @@
             "notes": []
           }
         ],
-        "adjustments": [],
+        "adjustments": [
+          {
+            "id": "FLA-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 150000,
+            "notes": "From Spotrac cap totals"
+          }
+        ],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/florida-panthers/cap/_/year/2026",
@@ -62091,6 +62099,13 @@
             "category": "retainedSalary",
             "amount": 3250000,
             "notes": "Retained salary charge from Spotrac"
+          },
+          {
+            "id": "MTL-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 1934410,
+            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -64078,7 +64093,15 @@
             "notes": []
           }
         ],
-        "adjustments": [],
+        "adjustments": [
+          {
+            "id": "NJD-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 1250000,
+            "notes": "From Spotrac cap totals"
+          }
+        ],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/new-jersey-devils/cap/_/year/2026",
@@ -64406,6 +64429,13 @@
             "category": "buyout",
             "amount": 0,
             "notes": "Waived / buyout charge from Spotrac"
+          },
+          {
+            "id": "NYI-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 3500000,
+            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -65734,7 +65764,15 @@
             "notes": []
           }
         ],
-        "adjustments": [],
+        "adjustments": [
+          {
+            "id": "WSH-totals-1",
+            "label": "Performance Bonus Cushion Charge",
+            "category": "bonusOverage",
+            "amount": 552500,
+            "notes": "From Spotrac cap totals"
+          }
+        ],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/cap/_/year/2026",
@@ -66049,6 +66087,13 @@
             "category": "retainedSalary",
             "amount": 2500000,
             "notes": "Retained salary charge from Spotrac"
+          },
+          {
+            "id": "CHI-totals-1",
+            "label": "Performance Bonus Cushion Charge",
+            "category": "bonusOverage",
+            "amount": 4780000,
+            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -66345,7 +66390,15 @@
             "notes": []
           }
         ],
-        "adjustments": [],
+        "adjustments": [
+          {
+            "id": "COL-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 2291841,
+            "notes": "From Spotrac cap totals"
+          }
+        ],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/colorado-avalanche/cap/_/year/2026",
@@ -66646,7 +66699,15 @@
             "notes": []
           }
         ],
-        "adjustments": [],
+        "adjustments": [
+          {
+            "id": "DAL-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 2080000,
+            "notes": "From Spotrac cap totals"
+          }
+        ],
         "notes": [
           "Imported from Spotrac 2026-27 cap table on 2026-10-10.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/cap/_/year/2026",
@@ -69196,6 +69257,13 @@
             "category": "buyout",
             "amount": 0,
             "notes": "Waived / buyout charge from Spotrac"
+          },
+          {
+            "id": "EDM-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 250000,
+            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
@@ -69850,6 +69918,20 @@
             "category": "retainedSalary",
             "amount": 1387500,
             "notes": "Retained salary charge from Spotrac"
+          },
+          {
+            "id": "SJS-totals-1",
+            "label": "Salary cap maximum adjustment",
+            "category": "other",
+            "amount": 918694,
+            "notes": "From Spotrac cap totals"
+          },
+          {
+            "id": "SJS-totals-2",
+            "label": "Performance Bonus Cushion Charge",
+            "category": "bonusOverage",
+            "amount": 6430000,
+            "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
