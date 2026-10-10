@@ -136,6 +136,7 @@ test("parses the multi-year page's roster tables, badges, clauses and ages", () 
     [
       ["Auston Matthews", "active"],
       ["William Nylander", "active"],
+      ["Macklin Celebrini", "active"],
       ["Elvis Merzlikins", "ltir"],
       ["Martin Jones", "buyout"],
       ["Tomas Hertl", "retained"],
@@ -145,14 +146,14 @@ test("parses the multi-year page's roster tables, badges, clauses and ages", () 
   );
   const matthews = page.rows[0];
   assert.deepEqual(matthews.capHits, { "2026-27": 13250000, "2027-28": 13250000 });
-  assert.deepEqual(matthews.expiry, { season: "2028-29", status: "UFA" });
+  assert.deepEqual(matthews.expiries, [{ season: "2028-29", status: "UFA" }]);
   assert.deepEqual(matthews.clauses, { "2026-27": "NMC", "2027-28": "NMC" });
   assert.deepEqual([matthews.pos, matthews.age], ["C", 29]);
   // Badge cells carry small sort codes (5, 4) that must not read as cap hits.
-  assert.equal(page.rows[1].expiry, null);
-  assert.deepEqual(page.rows[6].capHits, { "2026-27": 1028333, "2027-28": 1028333, "2028-29": 1028333 });
-  assert.deepEqual(page.rows[6].expiry, { season: "2029-30", status: "RFA" });
-  assert.deepEqual(page.summary["Total Cap"], { "2026-27": 33204167, "2027-28": 27487500, "2028-29": 14237500, "2029-30": 12887500 });
+  assert.deepEqual(page.rows[1].expiries, []);
+  assert.deepEqual(page.rows[7].capHits, { "2026-27": 1028333, "2027-28": 1028333, "2028-29": 1028333 });
+  assert.deepEqual(page.rows[7].expiries, [{ season: "2029-30", status: "RFA" }]);
+  assert.deepEqual(page.summary["Total Cap"], { "2026-27": 33204167, "2027-28": 46287500, "2028-29": 33037500, "2029-30": 31687500 });
   assert.deepEqual(page.summary["Cap Maximum"], { "2026-27": 104000000, "2027-28": 113500000, "2028-29": 127500000, "2029-30": null });
 });
 
@@ -168,6 +169,7 @@ test("builds future sheets that add up to Spotrac's total cap", () => {
     [
       ["SR_20276", "active", 13250000, undefined, "NMC"],
       ["SR_15746", "active", 11500000, undefined, "NTC"],
+      ["SR_94103", "active", 18800000, undefined, undefined],
       ["SR_18927", "minors", 0, 2500000, undefined],
       ["SR_99413", "minors", 0, 1028333, undefined],
     ]
@@ -180,15 +182,15 @@ test("builds future sheets that add up to Spotrac's total cap", () => {
     ]
   );
   const total = (sheet) => sheet.items.reduce((s, i) => s + i.capHit, 0) + sheet.adjustments.reduce((s, a) => s + a.amount, 0);
-  assert.equal(total(s2728), 27487500);
-  assert.equal(total(sheets["2028-29"]), 14237500);
-  assert.equal(total(sheets["2029-30"]), 12887500);
+  assert.equal(total(s2728), 46287500);
+  assert.equal(total(sheets["2028-29"]), 33037500);
+  assert.equal(total(sheets["2029-30"]), 31687500);
   assert.equal(sheets["2029-30"].adjustments.some((adj) => adj.category === "buried"), false);
   assert.deepEqual(sheets["2030-31"].items, []);
 });
 
 test("fails a multi-year page whose rows exceed Spotrac's total", () => {
-  const short = yearly.replace("$27,487,500", "$20,000,000");
+  const short = yearly.replace("$46,287,500", "$40,000,000");
   assert.throws(() => buildFutureSheets(team, parseYearlyPage(short), FUTURE, noLimit), /2027-28: itemized/);
 });
 
@@ -218,7 +220,7 @@ test("rebuilds contracts from every season's sheets", () => {
     players: [{ id: "SR_20276", name: "Auston Matthews", pos: "C", age: 0 }, { id: "TOR_34", name: "Gone", pos: "C", age: 0 }],
   };
   const info = new Map(page.rows.map((row) => [`SR_${row.spotracId}`, { name: row.name, pos: row.pos, age: row.age }]));
-  const expiries = new Map(page.rows.filter((row) => row.expiry).map((row) => [`TOR|SR_${row.spotracId}`, row.expiry]));
+  const expiries = new Map(page.rows.filter((row) => row.expiries.length).map((row) => [`TOR|SR_${row.spotracId}`, row.expiries]));
   rebuildPlayersAndContracts(data, info, expiries);
 
   const byPlayer = Object.fromEntries(data.contracts.map((c) => [c.playerId, c]));
@@ -241,4 +243,19 @@ test("a new cap hit for the same player starts a new contract", () => {
   const data = { meta: { seasons: ["2026-27", "2027-28", "2028-29"] }, capSheets: { "2026-27": sheet(1e6), "2027-28": sheet(5e6), "2028-29": sheet(5e6) }, players: [] };
   rebuildPlayersAndContracts(data, new Map(), new Map());
   assert.deepEqual(data.contracts.map((c) => [c.startSeason, c.years, c.aav]), [["2026-27", 1, 1e6], ["2027-28", 2, 5e6]]);
+});
+
+test("a player another team retains salary on counts for his reduced cap hit", () => {
+  const retention = new Map([["SR_20276", 3_250_000]]);
+  const sheets = buildFutureSheets(team, parseYearlyPage(yearly.replace("$46,287,500", "$43,037,500")), FUTURE, noLimit, retention);
+  const matthews = sheets["2027-28"].items.find((item) => item.playerId === "SR_20276");
+  assert.deepEqual([matthews.capHit, matthews.aav], [10_000_000, 13_250_000]);
+  assert.equal(sheets["2027-28"].adjustments.find((adj) => adj.category === "buried").amount, 1350000);
+});
+
+test("an RFA badge followed by a new contract keeps the new contract's first cap hit", () => {
+  const celebrini = parseYearlyPage(yearly).rows.find((row) => row.name === "Macklin Celebrini");
+  assert.deepEqual(celebrini.capHits, { "2026-27": 975000, "2027-28": 18800000, "2028-29": 18800000, "2029-30": 18800000 });
+  assert.deepEqual(celebrini.expiries, [{ season: "2027-28", status: "RFA" }]);
+  assert.deepEqual(celebrini.clauses, { "2029-30": "NMC" });
 });

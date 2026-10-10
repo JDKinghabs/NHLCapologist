@@ -486,8 +486,10 @@ function yearlyTableKind(attrs) {
 }
 
 // The multi-year page has one table per roster group, a column per season
-// holding the player's cap hit (or a UFA/RFA badge in the season after the
-// contract ends), plus a Summary table of per-season totals.
+// holding the player's cap hit (or a UFA/RFA badge in the season after a
+// contract ends), plus a Summary table of per-season totals. When a player
+// has already signed his next contract, the badge cell carries that
+// contract's first cap hit in data-export and later seasons continue it.
 function parseYearlyPage(html) {
   const page = { rows: [], summary: {}, unknown: [] };
   for (const [, attrs, tableHtml] of html.matchAll(/<table([^>]*)>([\s\S]*?)<\/table>/gi)) {
@@ -501,7 +503,8 @@ function parseYearlyPage(html) {
     const headers = Array.from(thead.matchAll(/<th\b[^>]*>([\s\S]*?)<\/th>/gi)).map((match) => stripTags(match[1]));
     const seasonColumns = headers.map((header, idx) => [header, idx]).filter(([header]) => /^\d{4}-\d{2}$/.test(header));
     const rows = (extractTbody(tableHtml) || tableHtml).match(/<tr\b[\s\S]*?<\/tr>/gi) || [];
-    const cellsOf = (rowHtml) => Array.from(rowHtml.matchAll(/<td\b[^>]*>([\s\S]*?)<\/td>/gi)).map((match) => match[1]);
+    const cellsOf = (rowHtml) => Array.from(rowHtml.matchAll(/<td\b([^>]*)>([\s\S]*?)<\/td>/gi)).map((match) => match[2]);
+    const exportsOf = (rowHtml) => Array.from(rowHtml.matchAll(/<td\b([^>]*)>/gi)).map((match) => safeNum((match[1].match(/data-export="(\d+)"/) || [])[1]));
 
     if (kind === "summary") {
       rows.forEach((rowHtml) => {
@@ -517,20 +520,23 @@ function parseYearlyPage(html) {
       const link = rowHtml.match(/player\/_\/id\/(\d+)\/[^"]*" class="link[^"]*"[^>]*>([^<]+)<\/a>/i);
       if (!link) return;
       const cells = cellsOf(rowHtml);
+      const exported = exportsOf(rowHtml);
       const clauses = {};
       for (const [, season, clause] of rowHtml.matchAll(/(\d{4}-\d{2}):\s*(?:<i[^>]*><\/i>\s*)?(M-NMC|M-NTC|NMC|NTC)\b/gi)) {
         clauses[season] = clause.toUpperCase();
       }
       const capHits = {};
-      let expiry = null;
-      seasonColumns.forEach(([season, idx]) => {
-        const cell = cells[idx] || "";
-        const status = (cell.match(/pill-(ufa|rfa)\b/i) || [])[1];
+      const expiries = [];
+      const amountAt = (idx) => moneyIn(stripTags(cells[idx] || "")) || 0;
+      seasonColumns.forEach(([season, idx], col) => {
+        const status = ((cells[idx] || "").match(/pill-(ufa|rfa)\b/i) || [])[1];
         if (status) {
-          expiry = expiry || { season, status: status.toUpperCase() };
+          expiries.push({ season, status: status.toUpperCase() });
+          const nextIdx = seasonColumns[col + 1]?.[1];
+          if (exported[idx] > 0 && nextIdx !== undefined && amountAt(nextIdx) > 0) capHits[season] = exported[idx];
           return;
         }
-        const amount = moneyIn(stripTags(cell));
+        const amount = amountAt(idx);
         if (amount > 0) capHits[season] = amount;
       });
       page.rows.push({
@@ -541,7 +547,7 @@ function parseYearlyPage(html) {
         age: safeNum(stripTags(cells[column("age")] || "")) || null,
         capHits,
         clauses,
-        expiry,
+        expiries,
       });
     });
   }
@@ -551,12 +557,14 @@ function parseYearlyPage(html) {
   return page;
 }
 
-// Future seasons come from the multi-year page. Minor-league players are
-// listed at their full cap hit, but only a buried portion (if any) counts, so
-// they are kept with capHit 0, and whatever part of Spotrac's Total Cap the
-// page doesn't itemize is recorded as one charge. A negative remainder means
-// the page was misread, which fails the team.
-function buildFutureSheets(teamSource, page, seasons, maxSalary) {
+// Future seasons come from the multi-year page. It lists players at their
+// full cap hit, so a player whose former team retains part of his salary
+// (shown by the current cap page's adjusted cap hit) counts for the same
+// lower amount in later seasons. Minor-league players count only for a buried
+// portion (if any), so they are kept at capHit 0, and whatever part of
+// Spotrac's Total Cap the page doesn't itemize is recorded as one charge. A
+// negative remainder means the page was misread, which fails the team.
+function buildFutureSheets(teamSource, page, seasons, maxSalary, retention = new Map()) {
   const abbr = teamSource.abbr;
   const sheets = {};
   seasons.forEach((season) => {
@@ -588,7 +596,15 @@ function buildFutureSheets(teamSource, page, seasons, maxSalary) {
         minorsTotal += capHit;
         items.push({ kind: "player", playerId, category: "minors", capHit: 0, aav: capHit, notes: [] });
       } else {
-        items.push({ kind: "player", playerId, category: "active", capHit, ...(row.clauses[season] ? { clause: row.clauses[season] } : {}) });
+        const retained = retention.get(playerId) || 0;
+        items.push({
+          kind: "player",
+          playerId,
+          category: "active",
+          capHit: Math.max(0, capHit - retained),
+          ...(retained ? { aav: capHit } : {}),
+          ...(row.clauses[season] ? { clause: row.clauses[season] } : {}),
+        });
       }
     });
 
@@ -658,8 +674,9 @@ function rebuildPlayersAndContracts(data, playerInfo, expiries) {
     });
   });
   contracts.forEach((contract) => {
-    const expiry = expiries.get(`${contract.team}|${contract.playerId}`);
-    if (expiry && expiry.season === seasonAt(contract.startSeason, contract.years)) contract.expiryStatus = expiry.status;
+    const end = seasonAt(contract.startSeason, contract.years);
+    const expiry = (expiries.get(`${contract.team}|${contract.playerId}`) || []).find((entry) => entry.season === end);
+    if (expiry) contract.expiryStatus = expiry.status;
   });
   data.contracts = contracts;
 
@@ -708,11 +725,11 @@ function scrapeCapPage(teamSource, season, maxSalary) {
   });
 }
 
-function scrapeYearlyPage(teamSource, seasons, maxSalary) {
+function scrapeYearlyPage(teamSource, seasons, maxSalary, retention) {
   return withRetry(teamSource.abbr, async () => {
     const page = parseYearlyPage(await fetchUrl(yearlyPageUrl(teamSource)));
     page.unknown.forEach((id) => console.warn(`  ${teamSource.abbr}: ignored unrecognized multi-year table "${id}"`));
-    return { page, sheets: buildFutureSheets(teamSource, page, seasons, maxSalary) };
+    return { page, sheets: buildFutureSheets(teamSource, page, seasons, maxSalary, retention) };
   });
 }
 
@@ -754,11 +771,16 @@ async function main() {
     const abbr = teamSource.abbr;
     // Each page is fetched and parsed before anything is changed, so a failure
     // leaves that team's existing sheets intact.
+    const retention = new Map();
     try {
       const { parsed, dropped } = await scrapeCapPage(teamSource, season, maxSalary(season));
       setSheet(data.capSheets[season], abbr, buildCapSheet(teamSource, season, parsed, dropped));
       PLAYER_KINDS.forEach((kind) =>
-        parsed[kind].forEach((row) => playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos }))
+        parsed[kind].forEach((row) => {
+          playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos });
+          // Below the full cap hit outside the minors = salary retained by a former team.
+          if (kind !== "minors" && row.totalCap > row.adjustedCap) retention.set(`SR_${row.spotracId}`, row.totalCap - row.adjustedCap);
+        })
       );
       refreshed++;
     } catch (error) {
@@ -768,13 +790,13 @@ async function main() {
     await sleep(REQUEST_DELAY_MS);
 
     try {
-      const { page, sheets } = await scrapeYearlyPage(teamSource, futureSeasons, maxSalary);
+      const { page, sheets } = await scrapeYearlyPage(teamSource, futureSeasons, maxSalary, retention);
       futureSeasons.forEach((s) => setSheet(data.capSheets[s], abbr, sheets[s]));
       page.rows.forEach((row) => {
         if (row.kind === "buyout" || row.kind === "retained") return;
         const id = `SR_${row.spotracId}`;
         playerInfo.set(id, { ...playerInfo.get(id), name: row.name, ...(row.pos ? { pos: row.pos } : {}), ...(row.age ? { age: row.age } : {}) });
-        if (row.expiry) expiries.set(`${abbr}|${id}`, row.expiry);
+        if (row.expiries.length) expiries.set(`${abbr}|${id}`, row.expiries);
       });
       ceilings = ceilings || page.summary["Cap Maximum"];
       console.log(
