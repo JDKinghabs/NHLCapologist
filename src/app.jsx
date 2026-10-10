@@ -184,7 +184,7 @@ function buildTeamData(data, season, capCeiling) {
 function TeamCard({ team, capCeiling, selected, onClick }) {
   const pct = capCeiling ? Math.min((team.payroll / capCeiling) * 100, 105) : 0;
   const div = team.division || "—";
-  const F = team.roster.filter(p=>["C","LW","RW"].includes(p.pos)).length;
+  const F = team.roster.filter(p=>["C","LW","RW","F"].includes(p.pos)).length;
   const D = team.roster.filter(p=>p.pos==="D").length;
   const G = team.roster.filter(p=>p.pos==="G").length;
   return (
@@ -307,7 +307,7 @@ function TeamDetail({ team, capCeiling, onClose }) {
 
   const filtered = useMemo(() => {
     let p = [...team.roster];
-    if(tab === "forwards")  p = p.filter(x=>["C","LW","RW"].includes(x.pos));
+    if(tab === "forwards")  p = p.filter(x=>["C","LW","RW","F"].includes(x.pos));
     if(tab === "defense")   p = p.filter(x=>x.pos==="D");
     if(tab === "goalies")   p = p.filter(x=>x.pos==="G");
     if(tab === "expiring")  p = p.filter(x=>x.years<=1);

@@ -9,6 +9,15 @@ on:
     # Daily at 09:00 UTC. Cron is UTC; adjust if you want a different local time.
     - cron: "0 9 * * *"
   workflow_dispatch: # allow manual runs from the Actions tab
+    inputs:
+      debug_team:
+        description: "Print this team's Spotrac table markup to the log (e.g. NYI)"
+        required: false
+        default: ""
+      debug_player:
+        description: "Also print table rows containing this player name"
+        required: false
+        default: ""
 
 # Avoid overlapping refresh runs racing on the same file.
 concurrency:
@@ -32,6 +41,9 @@ jobs:
 
       - name: Refresh data from Spotrac
         run: node scripts/refresh-data.js
+        env:
+          SPOTRAC_DEBUG: ${{ inputs.debug_team }}
+          SPOTRAC_DEBUG_PLAYER: ${{ inputs.debug_player }}
 
       - name: Commit & push if changed
         run: |
