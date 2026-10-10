@@ -97,7 +97,10 @@ function buildPlayerRow(contract, player, season, item={}) {
     years: yearsLeft,
     total,
     endSeason,
-    type: contract.type || "UFA",
+    expiryStatus: contract.expiryStatus || null,
+    clause: item.clause || contract.clause || null,
+    signingBonus: safeNum(item.signingBonus),
+    incentives: safeNum(item.incentives),
     category: item.category || "active"
   };
 }
@@ -228,159 +231,6 @@ function TeamCard({ team, capCeiling, selected, onClick }) {
         <div className="roster-pill"><span>{F}</span>F</div>
         <div className="roster-pill"><span>{D}</span>D</div>
         <div className="roster-pill"><span>{G}</span>G</div>
-      </div>
-    </div>
-  );
-}
-
-function ContractsTable({ players, capCeiling, sortKey, setSortKey, sortDir, setSortDir }) {
-  function handleSort(key) {
-    if(sortKey === key) setSortDir(d => d === "desc" ? "asc" : "desc");
-    else { setSortKey(key); setSortDir("desc"); }
-  }
-
-  const cols = [
-    { key:"name",      label:"Player",      cls:"" },
-    { key:"category",  label:"Bucket",      cls:"" },
-    { key:"pos",       label:"POS",         cls:"" },
-    { key:"age",       label:"Age",         cls:"num" },
-    { key:"capHit",    label:"Cap Hit",     cls:"num" },
-    { key:"aav",       label:"AAV",         cls:"num" },
-    { key:"years",     label:"Yrs Left",    cls:"num" },
-    { key:"endSeason", label:"Ends",        cls:"" },
-    { key:"total",     label:"Total Value", cls:"num" },
-    { key:"type",      label:"Status",      cls:"" }
-  ];
-  const arrow = (k) => sortKey===k ? (sortDir==="desc"?"↓":"↑") : "";
-
-  if(players.length === 0) {
-    return <div className="empty-state">No contracts loaded for this season.</div>;
-  }
-
-  return (
-    <div style={{overflowX:"auto"}}>
-      <table className="contracts-table">
-        <thead>
-          <tr>
-            {cols.map(c=> (
-              <th key={c.key} className={c.cls} onClick={()=>handleSort(c.key)}>
-                {c.label} {arrow(c.key)}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {players.map((p) => {
-            const pct = capCeiling ? (p.capHit / capCeiling) * 100 : 0;
-            return (
-              <tr key={p.id}>
-                <td><span className="player-name">{p.name}</span></td>
-                <td><span className={`cap-category ${p.category}`}>{p.category}</span></td>
-                <td><span className="player-name mono" style={{fontSize:12,color:"var(--text3)"}}>{p.pos}</span></td>
-                <td className="num mono">{p.age}</td>
-                <td className="num">
-                  <span className={`mono ${pct>=10?"high-cap":pct>=6?"med-cap":"low-cap"}`}>
-                    {fmtM(p.capHit)}
-                  </span>
-                  <span className="cap-pct">{pct.toFixed(1)}%</span>
-                </td>
-                <td className="num mono" style={{color:"var(--text3)"}}>{fmtM(p.aav)}</td>
-                <td className="num mono">{p.years}yr</td>
-                <td className="mono" style={{color:"var(--text3)"}}>{p.endSeason || "-"}</td>
-                <td className="num mono" style={{color:"var(--text3)"}}>{fmtM(p.total)}</td>
-                <td>
-                  <span className={`contract-type type-${p.type.toLowerCase()}`}>{p.type}</span>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function TeamDetail({ team, capCeiling, onClose }) {
-  const [tab, setTab] = useState("all");
-  const [sortKey, setSortKey] = useState("capHit");
-  const [sortDir, setSortDir] = useState("desc");
-
-  const filtered = useMemo(() => {
-    let p = [...team.roster];
-    if(tab === "forwards")  p = p.filter(x=>["C","LW","RW","F"].includes(x.pos));
-    if(tab === "defense")   p = p.filter(x=>x.pos==="D");
-    if(tab === "goalies")   p = p.filter(x=>x.pos==="G");
-    if(tab === "expiring")  p = p.filter(x=>x.years<=1);
-
-    p.sort((a,b) => {
-      const av = a[sortKey], bv = b[sortKey];
-      if(typeof av === "string") return sortDir==="desc" ? bv.localeCompare(av) : av.localeCompare(bv);
-      return sortDir==="desc" ? (bv - av) : (av - bv);
-    });
-    return p;
-  }, [team, tab, sortKey, sortDir]);
-
-  const tabs = [
-    {id:"all",      label:"All Contracts"},
-    {id:"forwards", label:"Forwards"},
-    {id:"defense",  label:"Defense"},
-    {id:"goalies",  label:"Goalies"},
-    {id:"expiring", label:"Expiring"}
-  ];
-
-  const pct = capCeiling ? (team.payroll/capCeiling) * 100 : 0;
-
-  return (
-    <div className="detail-panel">
-      <div className="detail-header">
-        <div className="detail-abbr" style={{color:team.color}}>{team.abbr}</div>
-        <div className="detail-info">
-          <h2>{team.name}</h2>
-          <p>{team.division} Division · {team.roster.length} tracked player items · {team.capSheetStatus} cap sheet</p>
-        </div>
-        <div className="detail-caps">
-          <div className="detail-cap-item">
-            <div className="detail-cap-val" style={{color:"var(--text)"}}>{fmtM(team.payroll)}</div>
-            <div className="detail-cap-lbl">Cap Commitments</div>
-          </div>
-          <div className="detail-cap-item">
-            <div className={`detail-cap-val ${team.space<0?"high-cap":""}`}>
-              {team.space<0?"-":"+"}{fmtM(Math.abs(team.space))}
-            </div>
-            <div className="detail-cap-lbl">Cap Space</div>
-          </div>
-          <div className="detail-cap-item">
-            <div className="detail-cap-val" style={{color: pct>=92?"var(--yellow)":"var(--text2)"}}>
-              {pct.toFixed(1)}%
-            </div>
-            <div className="detail-cap-lbl">Cap Used</div>
-          </div>
-        </div>
-        <button className="close-btn" onClick={onClose}>✕</button>
-      </div>
-      <div style={{padding:"14px 18px",borderBottom:"1px solid var(--border)",display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
-        <span className="data-badge dim">Players: {fmtM(team.playerCap)}</span>
-        <span className="data-badge dim">Adjustments: {fmtM(team.adjustmentCap)}</span>
-        {Object.entries(team.rosterCounts).sort((a,b) => a[0].localeCompare(b[0])).map(([category, count]) => (
-          <span key={category} className={`cap-category ${category}`}>{category}: {count}</span>
-        ))}
-        {team.adjustments.map(adj => (
-          <span key={adj.id} className="data-badge warn">{adj.category}: {fmtM(adj.amount)}</span>
-        ))}
-      </div>
-      <div className="contracts-wrap">
-        <div className="contracts-tabs">
-          {tabs.map(t => (
-            <div key={t.id} className={`ctab ${tab===t.id?"active":""}`}
-                 onClick={()=>setTab(t.id)}>{t.label}</div>
-          ))}
-        </div>
-        <ContractsTable
-          players={filtered}
-          capCeiling={capCeiling}
-          sortKey={sortKey} setSortKey={setSortKey}
-          sortDir={sortDir} setSortDir={setSortDir}
-        />
       </div>
     </div>
   );
@@ -928,59 +778,48 @@ function IcoCoin(){
   return (<svg width="13" height="13" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}} fill="#c79a2b" aria-hidden="true">
     <path d="M8 7h8l-1 3a5 5 0 1 1-6 0z"/></svg>);
 }
-function IcoArb(){
-  return (<svg width="13" height="13" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}} fill="none" stroke="#5b6776" strokeWidth="2" aria-hidden="true">
-    <path d="M7 4v16M7 4l-3 4M7 4l3 4M17 20V4M17 20l-3-4M17 20l3-4"/></svg>);
-}
-function IcoCap(){
-  return (<svg width="14" height="14" viewBox="0 0 24 24" style={{verticalAlign:"-2px"}} fill="#5b6776" aria-hidden="true">
-    <path d="M12 4L2 9l10 5 8-4v5h2V9z"/><path d="M6 12v4c0 1 3 3 6 3s6-2 6-3v-4l-6 3z"/></svg>);
-}
-function deriveRich(p){
-  const aav = safeNum(p.aav);
-  let clause = null;
-  if(aav >= 7000000) clause = "NMC";
-  else if(aav >= 4000000) clause = "NTC";
-  const elc = aav > 0 && aav <= 1000000;
-  const bonus = aav >= 6000000 || elc;
-  const arb = elc || (p.type === "RFA" && aav < 4000000);
-  const ir = p.category === "ir" || p.category === "ltir";
-  return { clause, elc, bonus, arb, ir };
-}
-function deriveStatus(p, rich){ return (rich.elc || p.type === "RFA") ? "RFA" : "UFA"; }
-function deriveEndIdx(p, curIdx, seasons){
-  const yl = safeNum(p.years);
-  let len = yl > 1 ? yl : null;
-  if(!len){
-    const a = safeNum(p.aav) / 1000000;
-    len = Math.max(1, Math.min(8, Math.round(a / 1.6) + 1 + ((p.name||"").length % 3 - 1)));
-  }
-  return Math.min(seasons.length - 1, curIdx + len - 1);
-}
 function ExpiryPill({ kind }){
   const ufa = kind === "UFA";
   return <span style={{display:"inline-block",fontSize:12,fontWeight:600,padding:"4px 12px",borderRadius:7,
     background: ufa?"#fbe9ec":"#e7f6ee", color: ufa?"#9b2c3f":"#15803d",
     border:"1px solid "+(ufa?"#f1ccd4":"#c4e9d3")}}>{kind}</span>;
 }
+const CLAUSE_LABELS = {
+  NMC: "No-movement clause",
+  NTC: "No-trade clause",
+  "M-NMC": "Modified no-movement clause",
+  "M-NTC": "Modified no-trade clause",
+};
+const CATEGORY_CHIPS = {
+  ir: { label: "IR", background: "#fdecec", color: "#c23b3b" },
+  ltir: { label: "LTIR", background: "#fdecec", color: "#c23b3b" },
+  minors: { label: "Minors", background: "#eef2f6", color: "#5b6776" },
+  reserve: { label: "Reserve", background: "#eef2f6", color: "#5b6776" },
+  nonRoster: { label: "Non-roster", background: "#eef2f6", color: "#5b6776" },
+};
+
+function bonusTitle(p){
+  return [
+    p.signingBonus ? `Signing bonus ${fmtFull(p.signingBonus)}` : null,
+    p.incentives ? `Performance bonuses up to ${fmtFull(p.incentives)}` : null,
+  ].filter(Boolean).join(" · ");
+}
 function CapCell({ cell }){
   if(!cell) return <td style={{padding:"9px 14px"}} />;
   if(cell.badge) return <td style={{padding:"9px 14px",textAlign:"right"}}><ExpiryPill kind={cell.badge}/></td>;
-  const r = cell.rich || {};
   return (
-    <td style={{padding:"9px 14px",textAlign:"right",color:"#1d2733",fontWeight:600}}>
+    <td style={{padding:"9px 14px",textAlign:"right",color: cell.muted ? "#b3bcc7" : "#1d2733",fontWeight:600}}
+        title={cell.muted ? "Cap hit if on the NHL roster; not counted while in the minors" : undefined}>
       <span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
-        {r.bonus && cell.first && <IcoCoin/>}
-        {r.arb && cell.first && <IcoArb/>}
-        {r.clause && <IcoShield ntc={r.clause==="NTC"}/>}
+        {cell.bonus && <span title={cell.bonus}><IcoCoin/></span>}
         {fmtFull(cell.v)}
       </span>
     </td>
   );
 }
-function CapSheetGroup({ label, rows, displayIdxs }){
+function CapSheetGroup({ label, rows, displaySeasons }){
   if(rows.length === 0) return null;
-  const totals = displayIdxs.map((_, ci) => rows.reduce((s, r) => { const c = r.cells[ci]; return s + (c && c.v ? c.v : 0); }, 0));
+  const totals = displaySeasons.map((_, ci) => rows.reduce((s, r) => { const c = r.cells[ci]; return s + (c && c.v && !c.muted ? c.v : 0); }, 0));
   return (
     <React.Fragment>
       <tr style={{background:"#f3faf6",borderTop:"1px solid #e6eaf0",borderBottom:"1px solid #e6eaf0"}}>
@@ -989,48 +828,63 @@ function CapSheetGroup({ label, rows, displayIdxs }){
         </td>
         {totals.map((t, i) => <td key={i} style={{padding:"8px 14px",textAlign:"right",fontSize:12,fontWeight:700,color:"#15803d"}}>{t? fmtFull(t) : ""}</td>)}
       </tr>
-      {rows.map((r, ri) => (
-        <tr key={r.id || ri} style={{borderBottom:"1px solid #eef2f6", background: ri%2 ? "#f7faf8" : "#fff"}}>
-          <td style={{padding:"9px 14px"}}>
-            <div style={{display:"flex",alignItems:"center",gap:6,fontWeight:600,fontSize:14}}>
-              {lastFirst(r.name)}
-              <span style={{display:"inline-flex",gap:5,alignItems:"center"}}>
-                {r.rich.ir && <span style={{display:"inline-flex",alignItems:"center",gap:3,background:"#fdecec",color:"#c23b3b",fontSize:10,fontWeight:600,padding:"1px 5px",borderRadius:5}}>IR</span>}
-                {r.rich.elc && <IcoCap/>}
-                {r.rich.arb && <IcoArb/>}
-              </span>
-            </div>
-            <div style={{fontSize:12,color:"#97a2b0",marginTop:1}}>
-              <span style={{color:"#5b6776",fontWeight:600}}>age {r.age || "—"}</span> &nbsp;{r.pos}
-            </div>
-          </td>
-          {r.cells.map((c, ci) => <CapCell key={ci} cell={c}/>)}
-        </tr>
-      ))}
+      {rows.map((r, ri) => {
+        const chip = CATEGORY_CHIPS[r.category];
+        return (
+          <tr key={r.id || ri} style={{borderBottom:"1px solid #eef2f6", background: ri%2 ? "#f7faf8" : "#fff"}}>
+            <td style={{padding:"9px 14px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,fontWeight:600,fontSize:14}}>
+                {lastFirst(r.name)}
+                <span style={{display:"inline-flex",gap:5,alignItems:"center"}}>
+                  {r.clause && (
+                    <span title={CLAUSE_LABELS[r.clause] || r.clause} style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:"#5b6776"}}>
+                      <IcoShield ntc={/NTC/.test(r.clause)}/>{r.clause}
+                    </span>
+                  )}
+                  {chip && <span style={{background:chip.background,color:chip.color,fontSize:10,fontWeight:600,padding:"1px 5px",borderRadius:5}}>{chip.label}</span>}
+                </span>
+              </div>
+              <div style={{fontSize:12,color:"#97a2b0",marginTop:1}}>
+                <span style={{color:"#5b6776",fontWeight:600}}>age {r.age || "—"}</span> &nbsp;{r.pos}
+              </div>
+            </td>
+            {r.cells.map((c, ci) => <CapCell key={ci} cell={c}/>)}
+          </tr>
+        );
+      })}
     </React.Fragment>
   );
 }
 function CapSheetView({ team, data, season, capCeiling, onClose }){
   const seasons = data.meta?.seasons || [];
   const curIdx = seasons.indexOf(season);
-  const displayIdxs = [];
-  for(let i=0; i<6 && curIdx+i < seasons.length; i++) displayIdxs.push(curIdx+i);
-  const displaySeasons = displayIdxs.map(i => seasons[i]);
+  const displaySeasons = seasons.slice(curIdx, curIdx + 6);
+
+  // Every contract each player has with this team, in order, so an extension
+  // that starts after the current deal shows its own cap hits.
+  const dealsByPlayer = useMemo(() => {
+    const map = {};
+    (data.contracts || []).filter(c => c.team === team.abbr).forEach(c => (map[c.playerId] = map[c.playerId] || []).push(c));
+    Object.values(map).forEach(list => list.sort((a, b) => a.startSeason.localeCompare(b.startSeason)));
+    return map;
+  }, [data, team.abbr]);
 
   function model(p){
-    const rich = deriveRich(p);
-    const endIdx = deriveEndIdx(p, curIdx, seasons);
-    const status = deriveStatus(p, rich);
-    let firstUsed = false;
-    const cells = displayIdxs.map(idx => {
-      if(idx >= curIdx && idx <= endIdx){
-        const first = !firstUsed; firstUsed = true;
-        return { v: idx === curIdx ? p.capHit : p.aav, rich, first };
+    const deals = dealsByPlayer[p.playerId] || [];
+    const last = deals[deals.length - 1];
+    const afterLast = last ? seasonAt(last.startSeason, last.years) : null;
+    const bonus = bonusTitle(p);
+    const cells = displaySeasons.map((s, ci) => {
+      if(ci === 0) return { v: p.capHit, bonus };
+      const deal = deals.find(c => buildSeasonList(c.startSeason, c.years).includes(s));
+      if(deal){
+        const counted = safeNum(deal.capHits?.[s]);
+        return counted > 0 ? { v: counted } : { v: safeNum(deal.aav), muted: true };
       }
-      if(idx === endIdx + 1) return { badge: status };
+      if(s === afterLast && last.expiryStatus) return { badge: last.expiryStatus };
       return null;
     });
-    return { ...p, rich, status, cells };
+    return { ...p, cells };
   }
   const F=[], D=[], G=[];
   team.roster.forEach(p => {
@@ -1039,8 +893,8 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
     else if(p.pos === "G") G.push(m);
     else F.push(m);
   });
-  [F,D,G].forEach(g => g.sort((a,b) => safeNum(b.aav) - safeNum(a.aav)));
-  const grand = displayIdxs.map((_, ci) => [...F,...D,...G].reduce((s,r)=>{const c=r.cells[ci]; return s+(c&&c.v?c.v:0);},0));
+  [F,D,G].forEach(g => g.sort((a,b) => safeNum(b.capHit) - safeNum(a.capHit)));
+  const grand = displaySeasons.map((_, ci) => [...F,...D,...G].reduce((s,r)=>{const c=r.cells[ci]; return s+(c&&c.v&&!c.muted?c.v:0);},0));
 
   return (
     <div style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:14,padding:"18px 18px 16px",marginTop:24,color:"#1d2733",fontFamily:"'Barlow',sans-serif"}}>
@@ -1072,24 +926,24 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
             </tr>
           </thead>
           <tbody>
-            <CapSheetGroup label="Forwards" rows={F} displayIdxs={displayIdxs}/>
-            <CapSheetGroup label="Defense" rows={D} displayIdxs={displayIdxs}/>
-            <CapSheetGroup label="Goaltenders" rows={G} displayIdxs={displayIdxs}/>
+            <CapSheetGroup label="Forwards" rows={F} displaySeasons={displaySeasons}/>
+            <CapSheetGroup label="Defense" rows={D} displaySeasons={displaySeasons}/>
+            <CapSheetGroup label="Goaltenders" rows={G} displaySeasons={displaySeasons}/>
           </tbody>
           <tfoot>
             <tr style={{borderTop:"2px solid #d6e6dc",background:"#f3faf6"}}>
-              <td style={{padding:"11px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap hit total</td>
+              <td style={{padding:"11px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.05em"}}>Players' cap hits</td>
               {grand.map((t, i) => <td key={i} style={{padding:"11px 14px",textAlign:"right",fontWeight:700}}>{t? fmtFull(t):""}</td>)}
             </tr>
           </tfoot>
         </table>
       </div>
       <div style={{display:"flex",gap:16,flexWrap:"wrap",marginTop:12,fontSize:12,color:"#5b6776",alignItems:"center"}}>
-        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoShield/> NMC / <IcoShield ntc/> NTC clause</span>
-        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoCoin/> Signing bonus</span>
-        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoArb/> Arbitration</span>
-        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoCap/> Entry-level</span>
-        <span style={{marginLeft:"auto",color:"#b3bcc7",fontStyle:"italic"}}>Sample clause / bonus / term data — replaced by your spreadsheet values.</span>
+        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoShield/> NMC / <IcoShield ntc/> NTC (M- = modified)</span>
+        <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoCoin/> Signing or performance bonus</span>
+        <span><ExpiryPill kind="UFA"/> <ExpiryPill kind="RFA"/> Status when the contract ends</span>
+        <span style={{color:"#b3bcc7"}}>Grey: cap hit not counted while in the minors</span>
+        <span style={{marginLeft:"auto",color:"#97a2b0"}}>Contract data: Spotrac</span>
       </div>
     </div>
   );
