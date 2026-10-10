@@ -1,7 +1,6 @@
-// Build step: transpile/minify the JSX app and assemble the static dist/ folder.
-// React + ReactDOM are loaded as CDN globals in index.html, so the app references
-// the global `React` / `ReactDOM` — esbuild only needs to transform JSX, no bundling
-// of React itself.
+// Build step: bundle and minify the JSX app (with the pinned React from
+// node_modules, so the site loads no third-party scripts) and assemble the
+// static dist/ folder.
 import { build } from "esbuild";
 import { rmSync, mkdirSync, copyFileSync, cpSync } from "fs";
 import { fileURLToPath } from "url";
@@ -19,7 +18,8 @@ await build({
   minify: true,
   format: "iife",
   target: ["es2018"],
-  jsx: "transform", // classic runtime -> React.createElement (global React)
+  jsx: "transform", // classic runtime -> React.createElement
+  define: { "process.env.NODE_ENV": '"production"' },
   outfile: resolve(dist, "app.js"),
   logLevel: "info",
 });

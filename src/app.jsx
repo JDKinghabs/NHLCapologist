@@ -1,7 +1,16 @@
-const { useState, useMemo, useEffect, useRef } = React;
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { createRoot } from "react-dom/client";
+import { parseRoute, routeHash } from "./routes.js";
 
 function safeNum(n) {
   return typeof n === "number" && !Number.isNaN(n) ? n : 0;
+}
+
+// Enter or Space activates a clickable element that isn't a native button.
+function onActivateKey(handler) {
+  return e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(); }
+  };
 }
 
 function fmt(n, compact=false) {
@@ -193,7 +202,9 @@ function TeamCard({ team, capCeiling, selected, onClick }) {
   return (
     <div className={`team-card ${selected?"selected":""}`}
          style={{"--team-color": team.color}}
-         onClick={onClick}>
+         role="button" tabIndex={0} aria-expanded={selected}
+         aria-label={`${team.name}, ${team.space < 0 ? "-" : "+"}${fmt(Math.abs(team.space), true)} cap space: cap sheet`}
+         onClick={onClick} onKeyDown={onActivateKey(onClick)}>
       <div className="card-header">
         <div className="team-abbr" style={{color: team.color}}>{team.abbr}</div>
         <div className="team-name-block">
@@ -306,6 +317,8 @@ function StdTable({ teams, wildcard, capCeiling, cutoffIdx, showDiv, onTeamClick
             <tr key={team.abbr}
                 className={[i === cutoffIdx ? "playoff-cutoff-row" : "", team.abbr === selectedTeamAbbr ? "row-selected" : ""].filter(Boolean).join(" ")}
                 onClick={() => onTeamClick && onTeamClick(team)}
+                tabIndex={onTeamClick ? 0 : undefined}
+                onKeyDown={onTeamClick ? onActivateKey(() => onTeamClick(team)) : undefined}
                 style={{cursor: onTeamClick ? "pointer" : "default"}}>
               <td style={{fontFamily:"'Space Mono',monospace",fontSize:10,color:"var(--text3)",textAlign:"right"}}>{i+1}</td>
               <td><StdTeamCell team={team} wildcard={wildcard}/></td>
@@ -333,12 +346,6 @@ function StandingsView({ teamData, data, season, capCeiling, onTeamClick, select
     [teamData, data, season]
   );
   const hasData = enriched.some(t => t.hasStandings);
-  const detailRef = useRef(null);
-  useEffect(() => {
-    if (selectedTeam && detailRef.current) {
-      detailRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [selectedTeam?.abbr]);
 
   return (
     <div>
@@ -402,9 +409,7 @@ function StandingsView({ teamData, data, season, capCeiling, onTeamClick, select
         </div>
       )}
       {selectedTeam && (
-        <div ref={detailRef} style={{marginTop: 24}}>
-          <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={() => onTeamClick(selectedTeam)}/>
-        </div>
+        <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={() => onTeamClick(selectedTeam)}/>
       )}
     </div>
   );
@@ -708,7 +713,7 @@ function TradePanel({ side, abbr, roster, selected, onToggle, onTeamChange, allA
     <div className="trade-panel">
       <div className="trade-panel-header">
         <span className="trade-panel-title">Team {side}</span>
-        <select className="trade-team-select" value={abbr} onChange={e => onTeamChange(e.target.value)}>
+        <select className="trade-team-select" aria-label={`Team ${side}`} value={abbr} onChange={e => onTeamChange(e.target.value)}>
           {allAbbrs.map(a => <option key={a} value={a}>{a}</option>)}
         </select>
       </div>
@@ -750,7 +755,8 @@ function TradePanel({ side, abbr, roster, selected, onToggle, onTeamChange, allA
           : roster.map(p => (
             <div key={p.id}
                  className={`trade-player-row ${selected.includes(p.id) ? "selected" : ""}`}
-                 onClick={() => onToggle(p.id)}>
+                 role="checkbox" aria-checked={selected.includes(p.id)} tabIndex={0}
+                 onClick={() => onToggle(p.id)} onKeyDown={onActivateKey(() => onToggle(p.id))}>
               <div className="trade-player-check">{selected.includes(p.id) ? "✓" : ""}</div>
               <span className="trade-player-name">{p.name}</span>
               <span className="trade-player-pos">{p.pos}</span>
@@ -827,7 +833,7 @@ function CapSheetGroup({ label, rows, displaySeasons }){
     <React.Fragment>
       <tr style={{background:"#f3faf6",borderTop:"1px solid #e6eaf0",borderBottom:"1px solid #e6eaf0"}}>
         <td style={{padding:"8px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.06em"}}>
-          {label} <span style={{color:"#97a2b0",fontWeight:500}}>{rows.length}</span>
+          {label} <span style={{color:"#6b7685",fontWeight:500}}>{rows.length}</span>
         </td>
         {totals.map((t, i) => <td key={i} style={{padding:"8px 14px",textAlign:"right",fontSize:12,fontWeight:700,color:"#15803d"}}>{t? fmtFull(t) : ""}</td>)}
       </tr>
@@ -847,7 +853,7 @@ function CapSheetGroup({ label, rows, displaySeasons }){
                   {chip && <span style={{background:chip.background,color:chip.color,fontSize:10,fontWeight:600,padding:"1px 5px",borderRadius:5}}>{chip.label}</span>}
                 </span>
               </div>
-              <div style={{fontSize:12,color:"#97a2b0",marginTop:1}}>
+              <div style={{fontSize:12,color:"#6b7685",marginTop:1}}>
                 <span style={{color:"#5b6776",fontWeight:600}}>age {r.age || "—"}</span> &nbsp;{r.pos}
               </div>
             </td>
@@ -860,6 +866,10 @@ function CapSheetGroup({ label, rows, displaySeasons }){
 }
 function CapSheetView({ team, data, season, capCeiling, onClose }){
   const seasons = data.meta?.seasons || [];
+  const sheetRef = useRef(null);
+  useEffect(() => {
+    sheetRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [team.abbr]);
   const curIdx = seasons.indexOf(season);
   const displaySeasons = seasons.slice(curIdx, curIdx + 6);
 
@@ -900,18 +910,18 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
   const grand = displaySeasons.map((_, ci) => [...F,...D,...G].reduce((s,r)=>{const c=r.cells[ci]; return s+(c&&c.v&&!c.muted?c.v:0);},0));
 
   return (
-    <div style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:14,padding:"18px 18px 16px",marginTop:24,color:"#1d2733",fontFamily:"'Barlow',sans-serif"}}>
+    <section ref={sheetRef} className="cap-sheet" aria-label={`${team.name} cap sheet`} style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:14,padding:"18px 18px 16px",marginTop:24,color:"#1d2733",fontFamily:"'Barlow',sans-serif"}}>
       <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:16,flexWrap:"wrap"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{width:10,height:10,borderRadius:"50%",background: team.color || "#16a34a",display:"inline-block"}}/>
           <span style={{fontSize:22,fontWeight:700,fontFamily:"'Barlow Condensed',sans-serif"}}>{team.name}</span>
         </div>
-        <div style={{fontSize:13,color:"#97a2b0",paddingBottom:2}}>{team.division} Division · cap sheet</div>
+        <div style={{fontSize:13,color:"#6b7685",paddingBottom:2}}>{team.division} Division · cap sheet</div>
         <div style={{marginLeft:"auto",display:"flex",gap:18,alignItems:"center"}}>
-          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(capCeiling)}</div><div style={{fontSize:11,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em"}}>Ceiling</div></div>
-          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(team.payroll)}</div><div style={{fontSize:11,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap Hit</div></div>
-          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,color: team.space<0?"#d6453f":"#16a34a",fontFamily:"'Space Mono',monospace"}}>{team.space<0?"-":"+"}{fmtM(Math.abs(team.space))}</div><div style={{fontSize:11,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em"}}>Space</div></div>
-          <button onClick={onClose} style={{background:"#f3f6f9",border:"1px solid #d8dee7",color:"#5b6776",cursor:"pointer",width:30,height:30,borderRadius:6,fontSize:15}}>✕</button>
+          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(capCeiling)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Ceiling</div></div>
+          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(team.payroll)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap Hit</div></div>
+          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,color: team.space<0?"#d6453f":"#16a34a",fontFamily:"'Space Mono',monospace"}}>{team.space<0?"-":"+"}{fmtM(Math.abs(team.space))}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Space</div></div>
+          <button onClick={onClose} aria-label="Close cap sheet" title="Close" style={{background:"#f3f6f9",border:"1px solid #d8dee7",color:"#5b6776",cursor:"pointer",width:30,height:30,borderRadius:6,fontSize:15}}>✕</button>
         </div>
       </div>
 
@@ -920,10 +930,10 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
         <table style={{width:"100%",borderCollapse:"collapse",minWidth:760,fontVariantNumeric:"tabular-nums",background:"#fff"}}>
           <thead>
             <tr style={{borderBottom:"1px solid #e6eaf0"}}>
-              <th style={{textAlign:"left",padding:"11px 14px",fontSize:11,fontWeight:600,color:"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em",minWidth:180}}>Player</th>
+              <th style={{textAlign:"left",padding:"11px 14px",fontSize:11,fontWeight:600,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em",minWidth:180}}>Player</th>
               {displaySeasons.map((s, i) => (
                 <th key={s} style={{textAlign:"right",padding:"11px 14px",fontSize:11,fontWeight:i===0?700:600,
-                  color:i===0?"#15803d":"#97a2b0",textTransform:"uppercase",letterSpacing:"0.05em",
+                  color:i===0?"#15803d":"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em",
                   borderBottom:i===0?"2px solid #16a34a":"none"}}>{s}</th>
               ))}
             </tr>
@@ -946,21 +956,19 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
         <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoCoin/> Signing or performance bonus</span>
         <span><ExpiryPill kind="UFA"/> <ExpiryPill kind="RFA"/> Status when the contract ends</span>
         <span style={{color:"#b3bcc7"}}>Grey: cap hit not counted while in the minors</span>
-        <span style={{marginLeft:"auto",color:"#97a2b0"}}>Contract data: Spotrac</span>
+        <span style={{marginLeft:"auto",color:"#6b7685"}}>Contract data: Spotrac</span>
       </div>
-    </div>
+    </section>
   );
 }
 
 function App() {
   const [data, setData] = useState(null);
   const [loadError, setLoadError] = useState("");
-  const [view, setView] = useState("dashboard");
+  const [route, setRoute] = useState(null);
   const [search, setSearch] = useState("");
   const [divFilter, setDivFilter] = useState("all");
   const [sortMode, setSortMode] = useState("space");
-  const [season, setSeason] = useState("");
-  const [selectedTeamAbbr, setSelectedTeamAbbr] = useState(null);
 
   useEffect(() => {
     fetch("data/nhl-cap-data.json", { cache: "no-store" })
@@ -968,14 +976,33 @@ function App() {
         if(!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json();
       })
-      .then(d => {
-        setData(d);
-        const defaultSeason = d.meta?.defaultSeason || d.meta?.seasons?.[0] || "";
-        setSeason(defaultSeason);
-      })
+      .then(setData)
       .catch(err => setLoadError(err.message || "Failed to load data"));
   }, []);
 
+  // The URL hash is the source of truth for the season, view and open team,
+  // so links can be shared and the back button works.
+  useEffect(() => {
+    if (!data) return;
+    const ctx = {
+      seasons: data.meta?.seasons || [],
+      teams: (data.teams || []).map(t => t.abbr),
+      defaultSeason: data.meta?.defaultSeason || data.meta?.seasons?.[0] || "",
+    };
+    const sync = () => setRoute(parseRoute(window.location.hash, ctx));
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [data]);
+
+  function navigate(patch) {
+    const hash = routeHash({ ...route, ...patch });
+    if (hash !== window.location.hash) window.location.hash = hash;
+  }
+
+  const season = route?.season || "";
+  const view = route?.view || "dashboard";
+  const selectedTeamAbbr = route?.team || null;
   const seasons = data?.meta?.seasons || [];
   const divisions = data?.divisions || [];
   const capInfo = (data?.meta?.caps && season) ? (data.meta.caps[season] || {}) : {};
@@ -984,6 +1011,13 @@ function App() {
 
   const teamData = useMemo(() => data && season ? buildTeamData(data, season, capCeiling) : [], [data, season, capCeiling]);
   const selectedTeam = useMemo(() => teamData.find(t => t.abbr === selectedTeamAbbr) || null, [teamData, selectedTeamAbbr]);
+
+  useEffect(() => {
+    if (!route) return;
+    const label = selectedTeam ? `${selectedTeam.name} cap sheet`
+      : { dashboard: "NHL Salary Cap Tracker", standings: "Standings and payrolls", trade: "Trade tool", projections: "Cap projections" }[view];
+    document.title = `${label} · ${season} · IceCap`;
+  }, [route, selectedTeam, view, season]);
 
   const filtered = useMemo(() => {
     let t = teamData;
@@ -1003,13 +1037,12 @@ function App() {
     return (
       <div className="error-state">
         <h2>Data Load Failed</h2>
-        <p>{loadError}</p>
-        <p>Run this page from a local web server so the JSON can be fetched.</p>
+        <p>The cap data couldn't be loaded ({loadError}). Please reload the page.</p>
       </div>
     );
   }
 
-  if(!data || !season) {
+  if(!data || !route) {
     return (
       <div className="loading-state">
         <h2>Loading Cap Data</h2>
@@ -1020,38 +1053,35 @@ function App() {
 
   const totalPayrolls = teamData.reduce((s,t)=>s + safeNum(t.payroll), 0);
   const overCap = teamData.filter(t=>t.space<0).length;
-  const underFloor = teamData.filter(t=>t.payroll<capFloor).length;
-  const populatedTeams = teamData.filter(t=>t.roster.length>0).length;
 
   function handleTeamClick(team) {
-    setSelectedTeamAbbr(prev => prev === team.abbr ? null : team.abbr);
+    navigate({ team: selectedTeamAbbr === team.abbr ? null : team.abbr });
   }
 
   return (
     <div>
       <header className="header">
         <div className="header-inner">
-          <div className="logo">
+          <a className="logo" href="#/" aria-label="IceCap home">
             <div className="logo-dot"/>
             ICE<span className="logo-ice">CAP</span>
-          </div>
-          <div className="season-pill">
+          </a>
+          <label className="season-pill">
             <span>Season</span>
-            <select className="season-select" value={season} onChange={e=>setSeason(e.target.value)}>
+            <select className="season-select" value={season} onChange={e=>navigate({ season: e.target.value })}>
               {seasons.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
-          </div>
+          </label>
           <div className="data-badges">
             <div className="data-badge ice">Ceiling: {fmtM(capCeiling)}</div>
             <div className={`data-badge ${capInfo.projected ? "warn" : ""}`}>{capInfo.projected ? "Projected Cap" : "Official Cap"}</div>
-            <div className="data-badge dim">Schema v{data.meta?.schemaVersion || 1}</div>
           </div>
-          <div className="header-nav">
-            <button className={`nav-btn ${view==="dashboard"?"active":""}`} onClick={()=>setView("dashboard")}>Dashboard</button>
-            <button className={`nav-btn ${view==="standings"?"active":""}`} onClick={()=>setView("standings")}>Standings</button>
-            <button className={`nav-btn ${view==="trade"?"active":""}`} onClick={()=>setView("trade")}>Trade Tool</button>
-            <button className={`nav-btn ${view==="projections"?"active":""}`} onClick={()=>setView("projections")}>Projections</button>
-          </div>
+          <nav className="header-nav" aria-label="Sections">
+            {[["dashboard","Dashboard"],["standings","Standings"],["trade","Trade",<span className="nav-extra"> Tool</span>],["projections","Projections"]].map(([v, l, extra]) => (
+              <button key={v} className={`nav-btn ${view===v?"active":""}`} aria-current={view===v ? "page" : undefined}
+                      onClick={()=>navigate({ view: v, team: null })}>{l}{extra}</button>
+            ))}
+          </nav>
         </div>
       </header>
 
@@ -1084,16 +1114,11 @@ function App() {
           {data.meta?.notes ? <span>• {data.meta.notes}</span> : null}
         </div>
 
-        {data.meta?.sampleData && (
-          <div className="sample-banner">
-            Sample data loaded ({populatedTeams} teams populated). Add real contracts in data/nhl-cap-data.json to fill the rest.
-          </div>
-        )}
-
         {view === "dashboard" && (<>
           <div className="filters">
             <input
               className="search-input"
+              aria-label="Search teams"
               placeholder="Search team..."
               value={search}
               onChange={e=>setSearch(e.target.value)}
@@ -1131,7 +1156,7 @@ function App() {
           </div>
 
           {selectedTeam && (
-            <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={()=>setSelectedTeamAbbr(null)} />
+            <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={()=>navigate({ team: null })} />
           )}
         </>)}
 
@@ -1159,10 +1184,19 @@ function App() {
           <TradeView teamData={teamData} data={data} capCeiling={capCeiling} season={season}/>
         </>)}
       </main>
+
+      <footer className="site-footer">
+        <p>
+          Contracts and cap figures from <a href="https://www.spotrac.com/nhl/cap/" target="_blank" rel="noopener noreferrer">Spotrac</a>,
+          refreshed daily (last update {data.meta?.updated || "unknown"}).
+          Standings and team names from the <a href="https://www.nhl.com/standings" target="_blank" rel="noopener noreferrer">NHL</a>
+          {data.meta?.standingsAsOf ? ` (as of ${data.meta.standingsAsOf})` : ""}.
+          Cap ceilings after {seasons[0]} are projections.
+        </p>
+        <p>IceCap is an independent fan site, not affiliated with the NHL, its teams or Spotrac.</p>
+      </footer>
     </div>
   );
 }
 
-const container = document.getElementById("root");
-const root = ReactDOM.createRoot(container);
-root.render(<App/>);
+createRoot(document.getElementById("root")).render(<App/>);
