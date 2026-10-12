@@ -37,6 +37,33 @@ function getSpaceColor(space) {
   return "low-cap";
 }
 
+// Team colors are made for jerseys, not white pages: Seattle's sea blue or
+// Boston's gold can't be read as text. Text uses the primary color when it's
+// readable, else the team's second color, else the primary darkened until it
+// is. Large text (the big team codes) needs 3:1 contrast, smaller text 4.5:1.
+function contrastOnWhite(hex) {
+  const h = String(hex || "").replace("#", "");
+  if(!/^[0-9a-f]{6}$/i.test(h)) return 21;
+  const lum = [0, 2, 4].reduce((sum, i, k) => {
+    const v = parseInt(h.slice(i, i + 2), 16) / 255;
+    return sum + [0.2126, 0.7152, 0.0722][k] * (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4));
+  }, 0);
+  return 1.05 / (lum + 0.05);
+}
+function darkenHex(hex, amount) {
+  const h = hex.replace("#", "");
+  return "#" + [0, 2, 4].map(i => Math.round(parseInt(h.slice(i, i + 2), 16) * (1 - amount)).toString(16).padStart(2, "0")).join("");
+}
+function teamTextColor(team, minRatio = 4.5) {
+  const primary = team?.colors?.primary || team?.color;
+  const alt = team?.colors?.alt;
+  if(!primary || contrastOnWhite(primary) >= minRatio) return primary;
+  if(alt && contrastOnWhite(alt) >= minRatio) return alt;
+  let amount = 0.05;
+  while(amount < 0.9 && contrastOnWhite(darkenHex(primary, amount)) < minRatio) amount += 0.05;
+  return darkenHex(primary, amount);
+}
+
 // Cap space shown on the site counts LTIR relief (see ltirRelief in cap-math.js).
 const LTIR_NOTE = "Over the ceiling, covered by LTIR relief. The relief is an estimate from today's payroll; Spotrac doesn't publish it.";
 function spaceClass(team) {
@@ -69,7 +96,7 @@ function TeamCard({ team, capCeiling, selected, link }) {
        aria-label={`${team.name}, ${signedSpace(team.spaceWithLtir, true)} cap space${ltir ? " using LTIR relief" : ""}: cap sheet`}
        {...link}>
       <div className="card-header">
-        <div className="team-abbr" style={{color: team.color}}>{team.abbr}</div>
+        <div className="team-abbr" style={{color: teamTextColor(team, 3)}}>{team.abbr}</div>
         <div className="team-name-block">
           <div className="team-full-name">{team.name}</div>
           <div className="team-division">{div} Division</div>
@@ -83,7 +110,7 @@ function TeamCard({ team, capCeiling, selected, link }) {
       </div>
       <div className="cap-bar-wrap">
         <div className="cap-bar-track">
-          <div className={`cap-bar-fill ${ltir ? "warning" : getBarClass(pct)}`}
+          <div className={`cap-bar-fill ${ltir ? "ltir" : getBarClass(pct)}`}
                style={{width: `${Math.min(pct,100)}%`}} />
         </div>
         <div className="cap-stats">
@@ -146,7 +173,7 @@ function StdTeamCell({ team, wildcard }) {
   return (
     <div className="std-team-cell">
       <div className="std-team-bar" style={{background: team.color}}/>
-      <span className="std-abbr" style={{color: team.color}}>{team.abbr}</span>
+      <span className="std-abbr" style={{color: teamTextColor(team)}}>{team.abbr}</span>
       <span className="std-name">{team.name}</span>
       {wildcard.has(team.abbr) && <span className="wc-badge">WC</span>}
     </div>
@@ -365,10 +392,10 @@ function ProjectionsView({ teamData, data, capCeiling }) {
                   const seasonTeam = seasonCommitments?.[season]?.[team.abbr];
                   const ltir = seasonTeam?.capStatus === "ltir";
                   const space = seasonTeam ? seasonTeam.spaceWithLtir : ceiling - committed;
-                  const barClass = ltir ? "warning" : getBarClass(pct);
+                  const barClass = ltir ? "ltir" : getBarClass(pct);
                   return (
                     <div key={team.abbr} className="proj-team-bar-wrap">
-                      <span className="proj-team-tag" style={{color: team.color}}>{team.abbr}</span>
+                      <span className="proj-team-tag" style={{color: teamTextColor(team)}}>{team.abbr}</span>
                       <div className="proj-bar-track">
                         <div className={`proj-bar-fill cap-bar-fill ${barClass}`} style={{width: `${Math.min(pct, 100)}%`}}>
                           {pct > 10 && <span className="proj-bar-fill-label">{fmtM(committed)}</span>}
@@ -464,7 +491,7 @@ function TradeView({ teamData, data, capCeiling, season }) {
       ? { cls: "err", label: problems.join(" · ") }
       : newPay > capCeiling ? { cls: "warn", label: "Valid · using LTIR" }
       : space < 3000000 ? { cls: "warn", label: "Valid · tight" } : { cls: "ok", label: "Valid" };
-    return { abbr, color: team?.color, prevPay: safeNum(team?.payroll), delta, newPay, space, contracts, retainedSlots, status, sending, receiving };
+    return { abbr, color: teamTextColor(team, 3), prevPay: safeNum(team?.payroll), delta, newPay, space, contracts, retainedSlots, status, sending, receiving };
   }
 
   const sentA = rosterA.filter(p => selectedA.includes(p.id));
@@ -603,7 +630,7 @@ function TradePanel({ side, abbr, roster, selected, onToggle, onTeamChange, allA
           </div>
           <div style={{flex:1}}>
             <div className="cap-bar-track" style={{marginBottom:0}}>
-              <div className={`cap-bar-fill ${teamData.capStatus === "ltir" ? "warning" : getBarClass(pct)}`} style={{width:`${Math.min(pct,100)}%`}}/>
+              <div className={`cap-bar-fill ${teamData.capStatus === "ltir" ? "ltir" : getBarClass(pct)}`} style={{width:`${Math.min(pct,100)}%`}}/>
             </div>
           </div>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:11,color:"var(--text3)"}}>{pct.toFixed(1)}%</div>
@@ -976,6 +1003,9 @@ function App() {
   }
 
   if(!data || !route) {
+    // Pages built for search engines already show a summary; keep it on
+    // screen until the data arrives instead of a loading card.
+    if(STATIC_SUMMARY) return <div dangerouslySetInnerHTML={{ __html: STATIC_SUMMARY }}/>;
     return (
       <div className="loading-state">
         <h2>Loading Cap Data</h2>
@@ -1141,4 +1171,6 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")).render(<App/>);
+const rootEl = document.getElementById("root");
+const STATIC_SUMMARY = rootEl.querySelector(".prerender") ? rootEl.innerHTML : "";
+createRoot(rootEl).render(<App/>);

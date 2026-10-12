@@ -53,6 +53,17 @@ async function openPage(width, urlPath) {
   return page;
 }
 const pathOf = (page) => new URL(page.url()).pathname;
+// Text whose color has less than `min` contrast against white.
+const unreadable = (page, selector, min) => page.evaluate(([sel, minRatio]) => {
+  const ratio = (rgb) => {
+    const [r, g, b] = rgb.match(/\d+/g).slice(0, 3).map(Number).map((v) => {
+      v /= 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    });
+    return 1.05 / (0.2126 * r + 0.7152 * g + 0.0722 * b + 0.05);
+  };
+  return [...document.querySelectorAll(sel)].filter((el) => ratio(getComputedStyle(el).color) < minRatio).map((el) => el.textContent);
+}, [selector, min]);
 
 try {
   const page = await openPage(1400, "/teams/TOR");
@@ -78,6 +89,8 @@ try {
   if (ltirNow) {
     check((await page.locator(".cap-space-label", { hasText: "LTIR" }).count()) === ltirNow, "teams on LTIR relief are marked on their cards");
   }
+  const faintCodes = await unreadable(page, ".team-abbr", 3);
+  check(faintCodes.length === 0, `team codes on the cards are readable on white${faintCodes.length ? ` (not: ${faintCodes.join(", ")})` : ""}`);
   await page.locator('.team-card[href="/teams/TOR"]').click();
   await page.waitForSelector(".cap-sheet");
   check(pathOf(page) === "/teams/TOR", "a team card opens the team page");
@@ -86,6 +99,8 @@ try {
   await page.waitForSelector(".standings-division");
   check((await page.locator(".standings-table, .sample-banner").count()) > 0, "standings view renders");
   check(pathOf(page) === "/standings", "the URL follows the view");
+  const faintStandings = await unreadable(page, ".std-abbr", 4.5);
+  check(faintStandings.length === 0, `team codes in standings are readable on white${faintStandings.length ? ` (not: ${faintStandings.join(", ")})` : ""}`);
   await page.goBack();
   await page.waitForSelector(".cap-sheet");
   check(pathOf(page) === "/teams/TOR", "back returns to the cap sheet");
@@ -132,6 +147,26 @@ try {
   await stale.waitForSelector(".team-card");
   check((await stale.locator(".stale-note").innerText()).includes("Calgary"), "the dashboard names teams the refresh couldn't read");
   await stale.close();
+
+  // While the data downloads, a page built for search engines keeps its
+  // summary on screen; the app replaces it once the data is in.
+  const slow = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  slow.on("pageerror", (error) => failures.push(`slow page error: ${error.message}`));
+  await slow.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
+  let releaseData;
+  const dataHeld = new Promise((resolve) => (releaseData = resolve));
+  await slow.route("**/data/nhl-cap-data.json", async (route) => {
+    await dataHeld;
+    await route.continue();
+  });
+  await slow.goto(base + "/teams/TOR");
+  await slow.waitForTimeout(500);
+  check((await slow.locator(".prerender").isVisible()) && (await slow.locator(".loading-state").count()) === 0,
+    "the static summary stays on screen while the data loads");
+  releaseData();
+  await slow.waitForSelector(".cap-sheet");
+  check((await slow.locator(".prerender").count()) === 0, "then the app replaces it");
+  await slow.close();
 
   // A clause that only starts with an extension is named on the cap sheet.
   const sheetItem = (team, playerId) => data.capSheets[season][team]?.items.find((item) => item.playerId === playerId);
