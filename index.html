@@ -625,6 +625,22 @@
     position: sticky; left: 0; z-index: 1; background: inherit;
   }
   .cap-sheet-player { min-width: 180px; }
+  /* Forwards / Defense / Goaltenders: a solid header bar per group and a
+     white gap between groups. */
+  .cap-sheet tr.cap-group-head { background: #e3f3e9; border-top: 2px solid #16a34a; border-bottom: 1px solid #c4e9d3; }
+  .cap-sheet tr.cap-group-head > th, .cap-sheet tr.cap-group-head > td {
+    padding: 10px 14px; color: #14532d; font-size: 12px; font-weight: 700;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  .cap-sheet tr.cap-group-head > th {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .cap-group-count {
+    margin-left: 8px; padding: 1px 7px; border-radius: 10px; vertical-align: 2px;
+    background: #fff; border: 1px solid #c4e9d3; color: #15803d;
+    font-family: 'Barlow', sans-serif; font-size: 11px; letter-spacing: 0;
+  }
+  .cap-sheet tr.cap-group-gap > td { height: 22px; padding: 0; background: #fff; }
   .cap-sheet-frame { position: relative; }
   .cap-sheet-fade {
     position: absolute; top: 0; right: 1px; bottom: 1px; width: 32px; pointer-events: none;
