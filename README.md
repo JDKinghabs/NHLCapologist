@@ -33,7 +33,7 @@ Only real values are shown. When Spotrac doesn't give a field (an age, a status)
 1. **`scripts/refresh-data.js`** reads two Spotrac pages per team, 64 requests at 1.5 s apart with retries:
    - `/nhl/<team>/cap/_/year/<YYYY>` for the current season: every roster group plus Spotrac's cap totals.
    - `/nhl/<team>/yearly/` for future seasons, ages and status at expiry.
-2. Each page is checked against Spotrac's own totals before it's used. A page that doesn't add up (an alternate layout, a bad row) is refused, and that team keeps its last good data.
+2. Each page is checked against Spotrac's own totals before it's used. A page that doesn't add up (an alternate layout, a bad row) is refused, and that team keeps its last good data. Pages that fail are tried once more after the rest of the run (Spotrac sometimes serves a broken page for a few minutes).
 3. Players and contracts are rebuilt from the cap sheets: a player's consecutive seasons with one team at one cap hit make one contract.
 4. On July 1 the season window rolls forward: the finished season drops off and a new final season is added with a projected ceiling.
 5. **`scripts/refresh-standings.mjs`** updates the standings once the NHL has current-season games.
@@ -41,6 +41,8 @@ Only real values are shown. When Spotrac doesn't give a field (an age, a status)
 7. If the data changed, it's committed to `main`, and Cloudflare Pages redeploys. Days with no changes make no commit.
 
 **Alerts.** If some teams or the NHL API fail, whatever succeeded is still committed and the run is then marked failed, so GitHub emails you. The run's log lists what failed (`!! TOR multi-year FAILED: …`).
+
+**Stale teams.** A team whose pages still fail is listed in `meta.staleTeams` with the first day it failed, and removed once its pages read again (it only changes on those days, so quiet days still make no commit). The dashboard and that team's cap sheet then say its data is older than the rest, and validation warns once a team has been stale for more than 3 days.
 
 **Manual run inputs** (Actions → Refresh cap data → Run workflow):
 
@@ -106,7 +108,7 @@ node scripts/refresh-standings.mjs
 
 `data/nhl-cap-data.json` holds:
 
-- `meta`: seasons, cap ceilings and floors, and update dates;
+- `meta`: seasons, cap ceilings and floors, update dates, and `staleTeams` (teams whose Spotrac pages couldn't be read, when any);
 - `teams` and `divisions`;
 - `players`: Spotrac IDs (`SR_<id>`), names, positions, ages;
 - `contracts`: player, team, start season, term, AAV, per-season cap hits, clause, expiry status;

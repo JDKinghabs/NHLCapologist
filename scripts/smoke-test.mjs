@@ -114,7 +114,24 @@ try {
   const old = await openPage(1400, `/#/${season}/dashboard/TOR`);
   await old.waitForSelector(".cap-sheet");
   check(pathOf(old) === "/teams/TOR" && !new URL(old.url()).hash, "an old #/ link moves to /teams/TOR");
+  check((await old.locator(".stale-banner").count()) === 0, "a refreshed team shows no stale-data note");
   await old.close();
+
+  // A team whose Spotrac pages the refresh couldn't read is flagged. The data
+  // is served with meta.staleTeams added, so the real file isn't touched.
+  const staleData = { ...data, meta: { ...data.meta, staleTeams: { CGY: { since: "2026-10-11", pages: [season] } } } };
+  const stale = await browser.newPage({ viewport: { width: 1400, height: 900 } });
+  stale.on("pageerror", (error) => failures.push(`stale page error: ${error.message}`));
+  await stale.route(/fonts\.(googleapis|gstatic)\.com/, (route) => route.abort());
+  await stale.route("**/data/nhl-cap-data.json", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify(staleData) }));
+  await stale.goto(base + "/teams/CGY");
+  await stale.waitForSelector(".cap-sheet");
+  check(await stale.locator(".stale-banner").isVisible(), "a team the refresh couldn't read says its data is older");
+  await stale.goto(base + "/");
+  await stale.waitForSelector(".team-card");
+  check((await stale.locator(".stale-note").innerText()).includes("Calgary"), "the dashboard names teams the refresh couldn't read");
+  await stale.close();
 
   for (const urlPath of ["/teams/TOR", "/standings", "/trade", "/projections"]) {
     const phone = await openPage(390, urlPath);

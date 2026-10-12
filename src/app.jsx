@@ -47,6 +47,14 @@ function signedSpace(n, compact) {
   return (n < 0 ? "-" : "+") + (compact ? fmt(Math.abs(n), true) : fmtM(Math.abs(n)));
 }
 
+// Teams whose Spotrac pages the daily refresh couldn't read (meta.staleTeams).
+function staleNote(data, teamData) {
+  const stale = Object.entries(data.meta?.staleTeams || {});
+  if(!stale.length) return "";
+  const nameOf = (abbr) => teamData.find(t => t.abbr === abbr)?.name || abbr;
+  return stale.map(([abbr, info]) => `${nameOf(abbr)}: couldn't refresh from Spotrac since ${info.since}`).join("; ");
+}
+
 function TeamCard({ team, capCeiling, selected, link }) {
   const pct = capCeiling ? Math.min((team.payroll / capCeiling) * 100, 105) : 0;
   const ltir = team.capStatus === "ltir";
@@ -730,6 +738,7 @@ function CapSheetGroup({ label, rows, displaySeasons }){
 }
 function CapSheetView({ team, data, season, capCeiling }){
   const seasons = data.meta?.seasons || [];
+  const stale = data.meta?.staleTeams?.[team.abbr];
   // On narrow screens the season columns scroll sideways; show a fade and a
   // hint while there are more columns to the right.
   const scrollRef = useRef(null);
@@ -806,6 +815,11 @@ function CapSheetView({ team, data, season, capCeiling }){
         </div>
       </div>
 
+      {stale && (
+        <div className="stale-banner" role="note">
+          Spotrac's {stale.pages.join(" and ")} page for the {team.name} couldn't be read since {stale.since}; this shows the last data read before then.
+        </div>
+      )}
       {moreRight && <div className="swipe-hint" aria-hidden="true">Swipe for later seasons →</div>}
       <div style={{height:3,background:"#16a34a",borderRadius:"3px 3px 0 0"}}/>
       <div className="cap-sheet-frame">
@@ -1031,6 +1045,7 @@ function App() {
         <div className="data-note">
           <span>Data updated: {data.meta?.updated || "Unknown"}</span>
           {data.meta?.notes ? <span>• {data.meta.notes}</span> : null}
+          {staleNote(data, teamData) && <span className="stale-note">• {staleNote(data, teamData)}</span>}
         </div>
 
           <div className="filters">

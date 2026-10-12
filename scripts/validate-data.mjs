@@ -37,7 +37,7 @@ function spotracTotals(notes = []) {
   };
 }
 
-export function validateData(data, { expectedTeams = 32 } = {}) {
+export function validateData(data, { expectedTeams = 32, today = new Date() } = {}) {
   const errors = [];
   const warnings = [];
   const error = (message) => errors.push(message);
@@ -154,6 +154,14 @@ export function validateData(data, { expectedTeams = 32 } = {}) {
       if (!teamAbbrs.has(abbr)) error(`${season} standings: unknown team ${abbr}`);
       if (row.gp !== row.w + row.l + row.ot) error(`${season} standings: ${abbr} games played ${row.gp} != W+L+OT`);
     });
+  });
+
+  // Teams whose Spotrac pages keep failing (written by the refresh). A few
+  // days is worth a look; the site already tells visitors the data is older.
+  Object.entries(data.meta?.staleTeams || {}).forEach(([abbr, info]) => {
+    if (!teamAbbrs.has(abbr)) error(`meta.staleTeams: unknown team ${abbr}`);
+    const days = Math.floor((today - new Date(`${info.since}T00:00:00Z`)) / 86_400_000);
+    if (days > 3) warnings.push(`${abbr}: Spotrac ${(info.pages || []).join(" and ")} page not refreshed since ${info.since} (${days} days)`);
   });
 
   return { errors, warnings };
