@@ -37,6 +37,8 @@ const DEBUG_URLS = (process.env.SPOTRAC_DEBUG_URL || "").split(",").map((url) =>
 
 const REQUEST_DELAY_MS = Number(process.env.REQUEST_DELAY_MS) || 1500;
 const MAX_RETRIES = Number(process.env.MAX_RETRIES) || 3;
+// Wait before the end-of-run second try at pages that failed.
+const SECOND_CHANCE_MS = process.env.SECOND_CHANCE_MS != null ? Number(process.env.SECOND_CHANCE_MS) : 60000;
 const TIMEOUT_MS = Number(process.env.TIMEOUT_MS) || 30000;
 
 const TEAM_SOURCES = [
@@ -135,7 +137,7 @@ async function fetchUrl(url) {
       lastError = error;
       if (attempt < MAX_RETRIES) {
         const backoff = REQUEST_DELAY_MS * attempt;
-        console.warn(`  ${teamSource.abbr} attempt ${attempt} failed (${error.message}); retrying in ${backoff}ms`);
+        console.warn(`  ${new URL(url).pathname} attempt ${attempt} failed (${error.message}); retrying in ${backoff}ms`);
         await sleep(backoff);
       }
     } finally {
@@ -765,6 +767,44 @@ function setSheet(sheetsByTeam, abbr, sheet) {
   if (!prev || !sameCapSheet(prev, sheet)) sheetsByTeam[abbr] = sheet;
 }
 
+// Spotrac occasionally serves a broken page for a few minutes (on 2026-10-11
+// Calgary's cap page came back with an unrelated table twice in a row), so
+// pages that fail get one more try once the rest of the run is done.
+async function retryFailedPages(failed, tryAgain, delayMs) {
+  if (!failed.length) return [];
+  console.log(`\nTrying ${failed.length} failed page(s) again in ${Math.round(delayMs / 1000)}s...`);
+  await sleep(delayMs);
+  const still = [];
+  for (const entry of failed) {
+    try {
+      await tryAgain(entry);
+      console.log(`  ${entry.abbr} ${entry.label}: refreshed on the second try`);
+    } catch (error) {
+      still.push({ ...entry, error });
+    }
+    await sleep(REQUEST_DELAY_MS);
+  }
+  return still;
+}
+
+// meta.staleTeams lists teams whose Spotrac pages couldn't be read, with the
+// first day they failed, so the site can say their data is older than the
+// rest. It changes only when a team starts or stops failing, so days with no
+// news still make no commit.
+function updateStaleTeams(meta, attempted, failedPages, date) {
+  const stale = { ...(meta.staleTeams || {}) };
+  attempted.forEach((abbr) => {
+    const pages = failedPages.get(abbr);
+    if (!pages?.size) {
+      delete stale[abbr];
+      return;
+    }
+    stale[abbr] = { since: stale[abbr]?.since || date, pages: [...pages].sort() };
+  });
+  if (Object.keys(stale).length) meta.staleTeams = stale;
+  else delete meta.staleTeams;
+}
+
 async function main() {
   if (DEBUG_URLS.length) return dumpPages(DEBUG_URLS);
   const data = JSON.parse(fs.readFileSync(DATA_PATH, "utf8"));
@@ -787,33 +827,50 @@ async function main() {
   let ceilings = null;
   let refreshed = 0;
   const failures = [];
+  const failedPages = new Map(); // abbr -> Set of page labels, for meta.staleTeams
+  const recordFailure = (abbr, label, message, kept) => {
+    failures.push(`${abbr} ${label}`);
+    (failedPages.get(abbr) || failedPages.set(abbr, new Set()).get(abbr)).add(label);
+    console.error(`!! ${abbr} ${label} FAILED: ${message} (keeping last-known-good ${kept})`);
+  };
 
+  // Each page is fetched and parsed before anything is changed, so a failure
+  // leaves that team's existing sheets intact.
+  const pages = [
+    {
+      label: season,
+      kept: "cap sheet",
+      run: async (teamSource) => {
+        const { parsed, dropped } = await scrapeCapPage(teamSource, season, maxSalary(season));
+        setSheet(data.capSheets[season], teamSource.abbr, buildCapSheet(teamSource, season, parsed, dropped));
+        PLAYER_KINDS.forEach((kind) =>
+          parsed[kind].forEach((row) => playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos }))
+        );
+        refreshed++;
+      },
+    },
+    {
+      label: "multi-year",
+      kept: "future sheets",
+      run: async (teamSource) => yearlyPages.set(teamSource.abbr, await scrapeYearlyPage(teamSource)),
+    },
+  ];
+
+  const failed = [];
   for (let i = 0; i < sources.length; i++) {
     const teamSource = sources[i];
-    const abbr = teamSource.abbr;
-    // Each page is fetched and parsed before anything is changed, so a failure
-    // leaves that team's existing sheets intact.
-    try {
-      const { parsed, dropped } = await scrapeCapPage(teamSource, season, maxSalary(season));
-      setSheet(data.capSheets[season], abbr, buildCapSheet(teamSource, season, parsed, dropped));
-      PLAYER_KINDS.forEach((kind) =>
-        parsed[kind].forEach((row) => playerInfo.set(`SR_${row.spotracId}`, { name: row.name, pos: row.pos }))
-      );
-      refreshed++;
-    } catch (error) {
-      failures.push(`${abbr} ${season}`);
-      console.error(`!! ${abbr} ${season} FAILED: ${error.message} (keeping last-known-good cap sheet)`);
+    for (const page of pages) {
+      try {
+        await page.run(teamSource);
+      } catch (error) {
+        failed.push({ teamSource, abbr: teamSource.abbr, label: page.label, page });
+        console.warn(`  ${teamSource.abbr} ${page.label} failed (${error.message}); trying again at the end of the run`);
+      }
+      if (page === pages[0] || i < sources.length - 1) await sleep(REQUEST_DELAY_MS);
     }
-    await sleep(REQUEST_DELAY_MS);
-
-    try {
-      yearlyPages.set(abbr, await scrapeYearlyPage(teamSource));
-    } catch (error) {
-      failures.push(`${abbr} multi-year`);
-      console.error(`!! ${abbr} multi-year FAILED: ${error.message} (keeping last-known-good future sheets)`);
-    }
-    if (i < sources.length - 1) await sleep(REQUEST_DELAY_MS);
   }
+  const stillFailed = await retryFailedPages(failed, (entry) => entry.page.run(entry.teamSource), SECOND_CHANCE_MS);
+  stillFailed.forEach((entry) => recordFailure(entry.abbr, entry.label, entry.error.message, entry.page.kept));
 
   // Future sheets need every team's Retained table, so they are built once all
   // multi-year pages are in. A single-team run only sees its own page.
@@ -840,14 +897,14 @@ async function main() {
       );
       refreshed++;
     } catch (error) {
-      failures.push(`${abbr} multi-year`);
-      console.error(`!! ${abbr} multi-year FAILED: ${error.message} (keeping last-known-good future sheets)`);
+      recordFailure(abbr, "multi-year", error.message, "future sheets");
     }
   });
 
   if (refreshed === 0) {
     throw new Error(`Every page failed — leaving ${path.basename(DATA_PATH)} untouched.`);
   }
+  updateStaleTeams(data.meta, sources.map((teamSource) => teamSource.abbr), failedPages, FETCH_DATE);
 
   if (ceilings) applyCapCeilings(data.meta, ceilings);
   rebuildPlayersAndContracts(data, playerInfo, expiries);
@@ -882,6 +939,9 @@ export {
   checkAgainstSpotracTotals,
   classifySection,
   dropImpossibleCapHits,
+  fetchUrl,
+  retryFailedPages,
+  updateStaleTeams,
   parsePlayerRows,
   parseTeamPage,
   parseYearlyPage,

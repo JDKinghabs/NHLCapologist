@@ -55,3 +55,13 @@ test("a missing current-season sheet fails; a missing future one only warns", ()
   assert.ok(errors.includes(`${current} ${abbr}: no cap sheet`));
   assert.ok(warnings.includes(`${data.meta.seasons[3]} ${abbr}: no cap sheet`));
 });
+
+test("a team stale for more than 3 days warns; an unknown stale team is an error", () => {
+  const data = copy();
+  data.meta.staleTeams = { CGY: { since: "2026-10-11", pages: ["2026-27"] } };
+  assert.deepEqual(validateData(data, { today: new Date("2026-10-13T12:00:00Z") }).warnings.filter((w) => w.startsWith("CGY")), []);
+  assert.ok(validateData(data, { today: new Date("2026-10-16T12:00:00Z") }).warnings
+    .includes("CGY: Spotrac 2026-27 page not refreshed since 2026-10-11 (5 days)"));
+  data.meta.staleTeams.XXX = { since: "2026-10-11", pages: ["multi-year"] };
+  assert.match(errorsOf(data), /meta.staleTeams: unknown team XXX/);
+});
