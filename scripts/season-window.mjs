@@ -39,17 +39,31 @@ function projectedCap(previous) {
   return { ceiling, floor: floorFor(ceiling), projected: true };
 }
 
-// Spotrac publishes projected ceilings for the next few seasons; those replace
-// the placeholder step, and later seasons are projected from the last one.
+// Upper limits the NHL and NHLPA agreed in January 2025. When Spotrac's
+// published ceiling for one of these seasons matches, it's official rather
+// than a projection.
+export const AGREED_CEILINGS = {
+  "2025-26": 95_500_000,
+  "2026-27": 104_000_000,
+  "2027-28": 113_500_000,
+};
+
+// Spotrac publishes ceilings for the next few seasons; those replace the
+// placeholder step, and later seasons are projected from the last one.
 // The current season's official cap is left as is.
 export function applyCapCeilings(meta, ceilings) {
   meta.seasons.forEach((season, i) => {
     if (i === 0) return;
     const ceiling = ceilings[season];
     meta.caps[season] = ceiling
-      ? { ceiling, floor: floorFor(ceiling), projected: true }
+      ? { ceiling, floor: floorFor(ceiling), projected: AGREED_CEILINGS[season] !== ceiling }
       : projectedCap(meta.caps[meta.seasons[i - 1]]);
   });
+}
+
+// The first season whose ceiling is a projection, for "ceilings from ... are projections".
+export function firstProjectedSeason(meta) {
+  return meta.seasons.find((season) => meta.caps?.[season]?.projected) || null;
 }
 
 // Moves `data` to the window starting at `first`. Returns true if anything changed.

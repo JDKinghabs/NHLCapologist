@@ -8,11 +8,21 @@ const {
   checkAgainstSpotracTotals,
   classifySection,
   dropImpossibleCapHits,
+  fixNameCase,
   parseTeamPage,
   parseYearlyPage,
   rebuildPlayersAndContracts,
   sameCapSheet,
 } = await import("../scripts/refresh-data.js");
+
+test("Spotrac's 'Mckenna' spellings are capitalized; other names are untouched", () => {
+  assert.equal(fixNameCase("Gavin Mckenna"), "Gavin McKenna");
+  assert.equal(fixNameCase("Aidan Mcdonough"), "Aidan McDonough");
+  assert.equal(fixNameCase("Bryce McConnell-Barker"), "Bryce McConnell-Barker");
+  assert.equal(fixNameCase("Nathan MacKinnon"), "Nathan MacKinnon");
+  assert.equal(fixNameCase("Connor Mackey"), "Connor Mackey");
+  assert.equal(fixNameCase("Mitch Marner"), "Mitch Marner");
+});
 
 const page = fs.readFileSync(new URL("./fixtures/spotrac-team-page.html", import.meta.url), "utf8");
 const byName = (rows, name) => rows.find((row) => row.name === name);

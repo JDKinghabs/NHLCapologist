@@ -22,7 +22,7 @@ It runs on Cloudflare Pages (project `nhlcapologist`, <https://nhlcapologist.pag
 |---|---|---|
 | Cap hits, contracts, clauses, bonuses, ages, UFA/RFA status, buried/retained/buyout charges | [Spotrac](https://www.spotrac.com/nhl/cap/) team cap pages | Daily |
 | Standings, official team names | NHL stats API (`api-web.nhle.com/v1/standings/now`) | Daily |
-| Cap ceilings | Spotrac where published; later seasons are projected at +$3.5M a year (floor = ceiling × 0.85 / 1.15) and labelled "Projected" | Daily |
+| Cap ceilings | Spotrac where published; later seasons are projected at +$3.5M a year (floor = ceiling × 0.85 / 1.15) and labelled "Projected". Ceilings the NHL and NHLPA have agreed (through 2027-28) are labelled official when Spotrac's figure matches | Daily |
 
 Only real values are shown. When Spotrac doesn't give a field (an age, a status), the site leaves it blank rather than guessing.
 
