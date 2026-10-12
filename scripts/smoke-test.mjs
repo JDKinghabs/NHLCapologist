@@ -9,6 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
 import { pageTitle } from "../src/routes.js";
+import { buildTeamData } from "../src/cap-math.js";
 import { createStaticServer } from "./static-server.mjs";
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
@@ -68,6 +69,15 @@ try {
   await page.waitForSelector(".team-card");
   check(pathOf(page) === "/" && (await page.locator(".team-card").count()) === data.teams.length, `the back link returns to all ${data.teams.length} teams`);
   check((await page.locator(".league-bar").count()) === 1, "the dashboard shows the league summary");
+  const teamsNow = buildTeamData(data, season, data.meta.caps[season].ceiling);
+  const overNow = teamsNow.filter((t) => t.capStatus === "over").length;
+  const ltirNow = teamsNow.filter((t) => t.capStatus === "ltir").length;
+  const overStat = page.locator(".league-stat", { hasText: "Teams Over Cap" });
+  check((await overStat.locator(".league-stat-val").innerText()).trim() === String(overNow),
+    `teams over the cap counts LTIR relief (${overNow} over, ${ltirNow} covered by LTIR)`);
+  if (ltirNow) {
+    check((await page.locator(".cap-space-label", { hasText: "LTIR" }).count()) === ltirNow, "teams on LTIR relief are marked on their cards");
+  }
   await page.locator('.team-card[href="/teams/TOR"]').click();
   await page.waitForSelector(".cap-sheet");
   check(pathOf(page) === "/teams/TOR", "a team card opens the team page");

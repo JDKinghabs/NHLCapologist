@@ -87,7 +87,26 @@ export function summarizeAdjustmentBuckets(adjustments) {
   }, {});
 }
 
+// LTIR relief. A team may go over the ceiling by the cap hits of its players
+// on long-term injured reserve, less whatever cap space it had when they went
+// on LTIR. Spotrac doesn't publish the payroll on each placement date, so this
+// assumes it was today's payroll without the LTIR players; with that, a team
+// over the ceiling but covered by LTIR uses exactly the relief it needs.
+//   capStatus "under": at or under the ceiling (no relief needed)
+//             "ltir":  over the ceiling, covered by LTIR relief
+//             "over":  over the ceiling even with LTIR relief
+export function ltirRelief({ payroll, ceiling, ltirCapHit }) {
+  const P = safeNum(payroll);
+  const C = safeNum(ceiling);
+  const L = safeNum(ltirCapHit);
+  if(!C) return { ltirCapHit: L, ltirPool: 0, spaceWithLtir: 0, capStatus: "under" };
+  const ltirPool = Math.max(0, L - Math.max(0, C - (P - L)));
+  const capStatus = P <= C ? "under" : P - L <= C ? "ltir" : "over";
+  return { ltirCapHit: L, ltirPool, spaceWithLtir: C + ltirPool - P, capStatus };
+}
+
 export function buildTeamData(data, season, capCeiling) {
+  const currentSeason = data.meta?.defaultSeason || data.meta?.seasons?.[0];
   const playersById = Object.fromEntries((data.players || []).map(p => [p.id, p]));
   const contractsByTeam = {};
   const contractLookup = {};
@@ -136,6 +155,11 @@ export function buildTeamData(data, season, capCeiling) {
     const adjustmentCap = adjustments.reduce((s,adj) => s + safeNum(adj.amount), 0);
     const payroll = playerCap + adjustmentCap;
     const space = capCeiling ? capCeiling - payroll : 0;
+    // LTIR is a current-season status; later seasons get no relief.
+    const ltirCapHit = season === currentSeason
+      ? roster.filter(p => p.category === "ltir").reduce((s, p) => s + safeNum(p.capHit), 0)
+      : 0;
+    const ltir = ltirRelief({ payroll, ceiling: capCeiling, ltirCapHit });
     const rosterCounts = roster.reduce((counts, player) => {
       counts[player.category] = (counts[player.category] || 0) + 1;
       return counts;
@@ -146,6 +170,7 @@ export function buildTeamData(data, season, capCeiling) {
       alt: team.colors?.alt || "#0d1117",
       payroll,
       space,
+      ...ltir,
       playerCap,
       adjustmentCap,
       adjustments,

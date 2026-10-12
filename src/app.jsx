@@ -37,8 +37,19 @@ function getSpaceColor(space) {
   return "low-cap";
 }
 
+// Cap space shown on the site counts LTIR relief (see ltirRelief in cap-math.js).
+const LTIR_NOTE = "Over the ceiling, covered by LTIR relief. The relief is an estimate from today's payroll; Spotrac doesn't publish it.";
+function spaceClass(team) {
+  return team.capStatus === "ltir" ? "ltir-cap" : getSpaceColor(team.spaceWithLtir);
+}
+function signedSpace(n, compact) {
+  if(!n) return compact ? "0" : "$0";
+  return (n < 0 ? "-" : "+") + (compact ? fmt(Math.abs(n), true) : fmtM(Math.abs(n)));
+}
+
 function TeamCard({ team, capCeiling, selected, link }) {
   const pct = capCeiling ? Math.min((team.payroll / capCeiling) * 100, 105) : 0;
+  const ltir = team.capStatus === "ltir";
   const div = team.division || "—";
   const F = team.roster.filter(p=>["C","LW","RW","F"].includes(p.pos)).length;
   const D = team.roster.filter(p=>p.pos==="D").length;
@@ -47,7 +58,7 @@ function TeamCard({ team, capCeiling, selected, link }) {
     <a className={`team-card ${selected?"selected":""}`}
        style={{"--team-color": team.color}}
        aria-current={selected ? "true" : undefined}
-       aria-label={`${team.name}, ${team.space < 0 ? "-" : "+"}${fmt(Math.abs(team.space), true)} cap space: cap sheet`}
+       aria-label={`${team.name}, ${signedSpace(team.spaceWithLtir, true)} cap space${ltir ? " using LTIR relief" : ""}: cap sheet`}
        {...link}>
       <div className="card-header">
         <div className="team-abbr" style={{color: team.color}}>{team.abbr}</div>
@@ -55,16 +66,16 @@ function TeamCard({ team, capCeiling, selected, link }) {
           <div className="team-full-name">{team.name}</div>
           <div className="team-division">{div} Division</div>
         </div>
-        <div>
-          <div className={`cap-space-num ${getSpaceColor(team.space)}`}>
-            {team.space < 0 ? "-" : "+"}{fmt(Math.abs(team.space), true)}
+        <div title={ltir ? LTIR_NOTE : undefined}>
+          <div className={`cap-space-num ${spaceClass(team)}`}>
+            {signedSpace(team.spaceWithLtir, true)}
           </div>
-          <div className="cap-space-label">Cap Space</div>
+          <div className="cap-space-label">{ltir ? "Space · LTIR" : "Cap Space"}</div>
         </div>
       </div>
       <div className="cap-bar-wrap">
         <div className="cap-bar-track">
-          <div className={`cap-bar-fill ${getBarClass(pct)}`}
+          <div className={`cap-bar-fill ${ltir ? "warning" : getBarClass(pct)}`}
                style={{width: `${Math.min(pct,100)}%`}} />
         </div>
         <div className="cap-stats">
@@ -174,7 +185,9 @@ function StdTable({ teams, wildcard, capCeiling, cutoffIdx, showDiv, onTeamClick
               <td className="std-pts">{team.hasStandings ? team.pts : "—"}</td>
               <td className="snum">{team.ptsPct > 0 ? team.ptsPct.toFixed(3) : "—"}</td>
               <td className="snum">{fmtM(team.payroll)}</td>
-              <td className={`snum ${getSpaceColor(team.space)}`}>{team.space < 0 ? "-" : "+"}{fmtM(Math.abs(team.space))}</td>
+              <td className={`snum ${spaceClass(team)}`} title={team.capStatus === "ltir" ? LTIR_NOTE : undefined}>
+                {signedSpace(team.spaceWithLtir)}{team.capStatus === "ltir" && <span className="ltir-tag">LTIR</span>}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -266,7 +279,7 @@ function ProjectionsView({ teamData, data, capCeiling }) {
     seasons.forEach((season) => {
       const seasonCap = safeNum(caps[season]?.ceiling);
       map[season] = Object.fromEntries(
-        buildTeamData(data, season, seasonCap).map(team => [team.abbr, team.payroll])
+        buildTeamData(data, season, seasonCap).map(team => [team.abbr, team])
       );
     });
     return map;
@@ -279,7 +292,7 @@ function ProjectionsView({ teamData, data, capCeiling }) {
   }
 
   function getTeamCommitment(teamAbbr, season) {
-    return safeNum(seasonCommitments?.[season]?.[teamAbbr]);
+    return safeNum(seasonCommitments?.[season]?.[teamAbbr]?.payroll);
   }
 
   // Contracts ending after each season, unless the player has already
@@ -341,8 +354,10 @@ function ProjectionsView({ teamData, data, capCeiling }) {
                 {teamsToShow.map(team => {
                   const committed = getTeamCommitment(team.abbr, season);
                   const pct = ceiling ? Math.min((committed / ceiling) * 100, 105) : 0;
-                  const space = ceiling - committed;
-                  const barClass = getBarClass(pct);
+                  const seasonTeam = seasonCommitments?.[season]?.[team.abbr];
+                  const ltir = seasonTeam?.capStatus === "ltir";
+                  const space = seasonTeam ? seasonTeam.spaceWithLtir : ceiling - committed;
+                  const barClass = ltir ? "warning" : getBarClass(pct);
                   return (
                     <div key={team.abbr} className="proj-team-bar-wrap">
                       <span className="proj-team-tag" style={{color: team.color}}>{team.abbr}</span>
@@ -351,8 +366,8 @@ function ProjectionsView({ teamData, data, capCeiling }) {
                           {pct > 10 && <span className="proj-bar-fill-label">{fmtM(committed)}</span>}
                         </div>
                       </div>
-                      <span className={`proj-space-val ${getSpaceColor(space)}`}>
-                        {space < 0 ? "-" : "+"}{fmtM(Math.abs(space))}
+                      <span className={`proj-space-val ${ltir ? "ltir-cap" : getSpaceColor(space)}`} title={ltir ? LTIR_NOTE : undefined}>
+                        {signedSpace(space)}{ltir && <span className="ltir-tag">LTIR</span>}
                       </span>
                     </div>
                   );
@@ -424,7 +439,12 @@ function TradeView({ teamData, data, capCeiling, season }) {
       receiving.reduce((s, p) => s + safeNum(p.capHit) - retained(p), 0) -
       sending.reduce((s, p) => s + safeNum(p.capHit) - retained(p), 0);
     const newPay = safeNum(team?.payroll) + delta;
-    const space = capCeiling - newPay;
+    // A team over the ceiling on LTIR keeps the relief it uses now, less the
+    // cap hit of any LTIR player it trades away; incoming players add none.
+    // So it can't take on net cap hit.
+    const ltirSent = sending.filter(p => p.category === "ltir").reduce((s, p) => s + safeNum(p.capHit), 0);
+    const relief = Math.max(0, safeNum(team?.ltirPool) - ltirSent);
+    const space = capCeiling + relief - newPay;
     const contracts = limits.contracts - sending.length + receiving.length;
     const retainedSlots = limits.retained + sending.filter(p => retention[p.id]).length;
     const problems = [
@@ -434,6 +454,7 @@ function TradeView({ teamData, data, capCeiling, season }) {
     ].filter(Boolean);
     const status = problems.length
       ? { cls: "err", label: problems.join(" · ") }
+      : newPay > capCeiling ? { cls: "warn", label: "Valid · using LTIR" }
       : space < 3000000 ? { cls: "warn", label: "Valid · tight" } : { cls: "ok", label: "Valid" };
     return { abbr, color: team?.color, prevPay: safeNum(team?.payroll), delta, newPay, space, contracts, retainedSlots, status, sending, receiving };
   }
@@ -539,8 +560,8 @@ function TradeView({ teamData, data, capCeiling, season }) {
             ))}
           </div>
           <div style={{fontSize:11,color:"var(--text3)",padding:"0 20px 16px"}}>
-            Retention is capped at 50% of a player's cap hit and 3 retained contracts per team. LTIR relief, which lets
-            teams with long-term injuries exceed the ceiling, isn't modelled.
+            Retention is capped at 50% of a player's cap hit and 3 retained contracts per team. A team over the ceiling
+            on LTIR keeps only the relief it uses today (estimated from its payroll), so it can't take on net cap hit.
           </div>
         </div>
       )}
@@ -564,15 +585,17 @@ function TradePanel({ side, abbr, roster, selected, onToggle, onTeamChange, allA
             <div style={{fontFamily:"'Space Mono',monospace",fontSize:12,color:"var(--text)"}}>{fmtM(teamData.payroll)}</div>
             <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'Barlow Condensed',sans-serif",textTransform:"uppercase",letterSpacing:"0.06em"}}>Payroll</div>
           </div>
-          <div>
-            <div className={`mono ${getSpaceColor(teamData.space)}`} style={{fontSize:12}}>
-              {teamData.space < 0 ? "-" : "+"}{fmtM(Math.abs(teamData.space))}
+          <div title={teamData.capStatus === "ltir" ? LTIR_NOTE : undefined}>
+            <div className={`mono ${spaceClass(teamData)}`} style={{fontSize:12}}>
+              {signedSpace(teamData.spaceWithLtir)}
             </div>
-            <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'Barlow Condensed',sans-serif",textTransform:"uppercase",letterSpacing:"0.06em"}}>Space</div>
+            <div style={{fontSize:10,color:"var(--text3)",fontFamily:"'Barlow Condensed',sans-serif",textTransform:"uppercase",letterSpacing:"0.06em"}}>
+              {teamData.capStatus === "ltir" ? "Space · LTIR" : "Space"}
+            </div>
           </div>
           <div style={{flex:1}}>
             <div className="cap-bar-track" style={{marginBottom:0}}>
-              <div className={`cap-bar-fill ${getBarClass(pct)}`} style={{width:`${Math.min(pct,100)}%`}}/>
+              <div className={`cap-bar-fill ${teamData.capStatus === "ltir" ? "warning" : getBarClass(pct)}`} style={{width:`${Math.min(pct,100)}%`}}/>
             </div>
           </div>
           <div style={{fontFamily:"'Space Mono',monospace",fontSize:11,color:"var(--text3)"}}>{pct.toFixed(1)}%</div>
@@ -770,7 +793,16 @@ function CapSheetView({ team, data, season, capCeiling }){
         <div style={{marginLeft:"auto",display:"flex",gap:18,alignItems:"center"}}>
           <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(capCeiling)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Ceiling</div></div>
           <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(team.payroll)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap Hit</div></div>
-          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,color: team.space<0?"#d6453f":"#16a34a",fontFamily:"'Space Mono',monospace"}}>{team.space<0?"-":"+"}{fmtM(Math.abs(team.space))}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Space</div></div>
+          {team.ltirCapHit > 0 && (
+            <div style={{textAlign:"right"}} title={`LTIR players' cap hits: ${fmtM(team.ltirCapHit)}. Relief is the part needed to cover going over the ceiling, estimated from today's payroll; Spotrac doesn't publish it.`}>
+              <div style={{fontSize:17,fontWeight:700,color:"#b45309",fontFamily:"'Space Mono',monospace"}}>{fmtM(team.ltirPool)}</div>
+              <div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>LTIR Relief</div>
+            </div>
+          )}
+          <div style={{textAlign:"right"}} title={team.capStatus === "ltir" ? LTIR_NOTE : undefined}>
+            <div style={{fontSize:17,fontWeight:700,color: team.capStatus === "ltir" ? "#b45309" : team.spaceWithLtir < 0 ? "#d6453f" : "#16a34a",fontFamily:"'Space Mono',monospace"}}>{signedSpace(team.spaceWithLtir)}</div>
+            <div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>{team.capStatus === "over" ? "Over the cap" : "Space"}</div>
+          </div>
         </div>
       </div>
 
@@ -902,7 +934,7 @@ function App() {
       x.name.toLowerCase().includes(search.toLowerCase()) ||
       x.abbr.toLowerCase().includes(search.toLowerCase())
     );
-    if(sortMode==="space")   t = [...t].sort((a,b)=>b.space-a.space);
+    if(sortMode==="space")   t = [...t].sort((a,b)=>b.spaceWithLtir-a.spaceWithLtir);
     if(sortMode==="payroll") t = [...t].sort((a,b)=>b.payroll-a.payroll);
     if(sortMode==="alpha")   t = [...t].sort((a,b)=>a.abbr.localeCompare(b.abbr));
     if(sortMode==="pct")     t = [...t].sort((a,b)=>(b.payroll/capCeiling)-(a.payroll/capCeiling));
@@ -928,7 +960,8 @@ function App() {
   }
 
   const totalPayrolls = teamData.reduce((s,t)=>s + safeNum(t.payroll), 0);
-  const overCap = teamData.filter(t=>t.space<0).length;
+  const overCap = teamData.filter(t => t.capStatus === "over").length;
+  const usingLtir = teamData.filter(t => t.capStatus === "ltir").length;
 
   function handleTeamClick(team) {
     navigate({ team: team.abbr });
@@ -984,7 +1017,9 @@ function App() {
           <div className="league-stat">
             <div className="league-stat-label">Teams Over Cap</div>
             <div className={`league-stat-val ${overCap>0?"red":""}`}>{overCap}</div>
-            <div className="league-stat-sub">of {teamData.length} NHL franchises</div>
+            <div className="league-stat-sub" title={usingLtir ? LTIR_NOTE : undefined}>
+              {usingLtir ? `${usingLtir} more over, covered by LTIR relief` : `of ${teamData.length} NHL franchises`}
+            </div>
           </div>
           <div className="league-stat">
             <div className="league-stat-label">Contracts Tracked</div>
