@@ -9,7 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
 import { pageTitle } from "../src/routes.js";
-import { buildSeasonList, buildTeamData } from "../src/cap-math.js";
+import { buildSeasonList, buildTeamData, teamSeasonTotals } from "../src/cap-math.js";
 import { createStaticServer } from "./static-server.mjs";
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
@@ -70,6 +70,19 @@ try {
   check((await page.locator(".cap-sheet tbody tr").count()) >= 15, "/teams/TOR opens Toronto's cap sheet");
   check((await page.locator(".team-card, .league-bar").count()) === 0, "a team page shows only that team");
   check((await page.locator(".back-link").getAttribute("href")) === "/", "a team page links back to all teams");
+
+  // The team summary rolls by season and highlights that season below.
+  const money = (n) => `$${(n / 1e6).toFixed(2)}M`;
+  const torTotals = teamSeasonTotals(data, "TOR", data.meta.seasons.slice(0, 6));
+  const capHitTile = page.locator(".summary-tile")
+    .filter({ has: page.locator(".summary-tile-label", { hasText: /^Cap hit$/i }) }).locator(".summary-tile-value");
+  check((await capHitTile.innerText()) === money(torTotals[0].payroll), `the team summary shows ${season}'s cap hit`);
+  check((await page.locator(".totals-table tbody tr").count()) === 6, "the summary lists team totals by season");
+  await page.locator(".summary-season").nth(1).click();
+  check((await capHitTile.innerText()) === money(torTotals[1].payroll) &&
+    (await page.locator(".cap-sheet th.season-col.focus-col").innerText()).includes(torTotals[1].season),
+    "picking a season rolls the summary and highlights that season in the cap sheet");
+  await page.locator(".summary-season").nth(0).click();
   check((await page.locator(".data-badge.ice").innerText()).includes(ceiling), `header shows the ${season} ceiling ${ceiling}`);
   check((await page.title()) === pageTitle({ season, view: "dashboard" }, toronto), "the page title names the team");
   check((await page.locator(".prerender").count()) === 0, "the app replaces the static summary");

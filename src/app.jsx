@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
-import { buildSeasonList, buildTeamData, safeNum, seasonAt } from "./cap-math.js";
+import { buildSeasonList, buildTeamData, safeNum, seasonAt, teamSeasonTotals } from "./cap-math.js";
 import { pageTitle, parseRoute, routePath } from "./routes.js";
 
 // Enter or Space activates a clickable element that isn't a native button.
@@ -712,11 +712,12 @@ function bonusTitle(p){
     p.incentives ? `Performance bonuses up to ${fmtFull(p.incentives)}` : null,
   ].filter(Boolean).join(" · ");
 }
-function CapCell({ cell }){
-  if(!cell) return <td style={{padding:"9px 14px"}} />;
-  if(cell.badge) return <td style={{padding:"9px 14px",textAlign:"right"}}><ExpiryPill kind={cell.badge}/></td>;
+function CapCell({ cell, focused }){
+  const cls = focused ? "focus-col" : undefined;
+  if(!cell) return <td className={cls} style={{padding:"9px 14px"}} />;
+  if(cell.badge) return <td className={cls} style={{padding:"9px 14px",textAlign:"right"}}><ExpiryPill kind={cell.badge}/></td>;
   return (
-    <td style={{padding:"9px 14px",textAlign:"right",color: cell.muted ? "#b3bcc7" : "#1d2733",fontWeight:600}}
+    <td className={cls} style={{padding:"9px 14px",textAlign:"right",color: cell.muted ? "#b3bcc7" : "#1d2733",fontWeight:600}}
         title={cell.muted ? "Cap hit if on the NHL roster; not counted while in the minors" : undefined}>
       <span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
         {cell.bonus && <span title={cell.bonus}><IcoCoin/></span>}
@@ -728,7 +729,7 @@ function CapCell({ cell }){
 }
 // Forwards, Defense and Goaltenders each start with a solid green header bar,
 // and a white gap separates one group from the next.
-function CapSheetGroup({ label, rows, displaySeasons, spaced }){
+function CapSheetGroup({ label, rows, displaySeasons, spaced, focusIdx }){
   if(rows.length === 0) return null;
   const totals = displaySeasons.map((_, ci) => rows.reduce((s, r) => { const c = r.cells[ci]; return s + (c && c.v && !c.muted ? c.v : 0); }, 0));
   return (
@@ -743,7 +744,7 @@ function CapSheetGroup({ label, rows, displaySeasons, spaced }){
         <th scope="rowgroup" style={{textAlign:"left"}}>
           {label}<span className="cap-group-count">{rows.length}</span>
         </th>
-        {totals.map((t, i) => <td key={i}>{t? fmtFull(t) : ""}</td>)}
+        {totals.map((t, i) => <td key={i} className={i === focusIdx ? "focus-col" : undefined}>{t? fmtFull(t) : ""}</td>)}
       </tr>
       {rows.map((r, ri) => {
         const chip = CATEGORY_CHIPS[r.category];
@@ -771,13 +772,110 @@ function CapSheetGroup({ label, rows, displaySeasons, spaced }){
                 <span style={{color:"#5b6776",fontWeight:600}}>age {r.age || "—"}</span> &nbsp;{r.pos}
               </div>
             </td>
-            {r.cells.map((c, ci) => <CapCell key={ci} cell={c}/>)}
+            {r.cells.map((c, ci) => <CapCell key={ci} cell={c} focused={ci === focusIdx}/>)}
           </tr>
         );
       })}
     </React.Fragment>
   );
 }
+
+// The summary at the top of a team page. Pick a season (pills, ‹ › or a
+// column in the totals table) and the tiles roll to that year; the totals
+// table shows every season at once. LTIR and the contract limit only
+// describe today, so those tiles appear for the current season only.
+function SummaryTile({ label, value, sub, tone, title }){
+  return (
+    <div className={`summary-tile ${tone || ""}`} title={title}>
+      <div className="summary-tile-label">{label}</div>
+      <div className="summary-tile-value">{value}</div>
+      <div className="summary-tile-sub">{sub}</div>
+    </div>
+  );
+}
+function TeamSummary({ team, data, totals, focus, onFocus }){
+  const currentSeason = data.meta?.defaultSeason || data.meta?.seasons?.[0];
+  const idx = Math.max(0, totals.findIndex(t => t.season === focus));
+  const f = totals[idx];
+  if(!f) return null;
+  const isNow = f.season === currentSeason;
+  const ltirPlayers = isNow ? team.roster.filter(p => p.category === "ltir") : [];
+  const limits = isNow ? rosterLimits(data, currentSeason, team.abbr) : null;
+  const spaceTone = f.capStatus === "ltir" ? "amber" : f.capStatus === "over" ? "red" : "green";
+  const spaceSub = f.capStatus === "ltir" ? "Using LTIR relief"
+    : f.capStatus === "over" ? "Over the ceiling"
+    : isNow ? "Under the ceiling" : "Before anyone else signs";
+  const projMark = (t) => t.projected ? "*" : "";
+  const rows = [
+    ["Cap hit", t => fmtM(t.payroll)],
+    ["Ceiling", t => `${fmtM(t.ceiling)}${projMark(t)}`],
+    ["Cap space", t => <span className={t.capStatus === "ltir" ? "ltir-cap" : t.space < 0 ? "high-cap" : "space-ok"}>{signedSpace(t.space)}</span>],
+    ["Players signed", t => t.signed],
+    ["Dead cap", t => t.deadCap ? fmtM(t.deadCap) : "—"],
+    ["UFA / RFA after", t => `${t.ufa} / ${t.rfa}`],
+  ];
+
+  return (
+    <div className="team-summary">
+      <div className="summary-seasons" role="group" aria-label="Season for the summary">
+        <button className="summary-step" aria-label="Previous season" disabled={idx === 0} onClick={() => onFocus(totals[idx - 1].season)}>‹</button>
+        {totals.map(t => (
+          <button key={t.season} className={`summary-season ${t.season === f.season ? "active" : ""}`}
+                  aria-pressed={t.season === f.season} onClick={() => onFocus(t.season)}
+                  title={t.projected ? "Projected ceiling" : undefined}>
+            {t.season}{projMark(t)}
+          </button>
+        ))}
+        <button className="summary-step" aria-label="Next season" disabled={idx === totals.length - 1} onClick={() => onFocus(totals[idx + 1].season)}>›</button>
+      </div>
+
+      <div className="summary-tiles">
+        <SummaryTile label="Cap space" value={signedSpace(f.space)} sub={spaceSub} tone={spaceTone}
+                     title={f.capStatus === "ltir" ? LTIR_NOTE : undefined}/>
+        <SummaryTile label="Cap hit" value={fmtM(f.payroll)} sub={`Ceiling ${fmtM(f.ceiling)}${f.projected ? " (projected)" : ""}`}/>
+        <SummaryTile label="Players signed" value={f.signed} sub={`${f.forwards} F · ${f.defense} D · ${f.goalies} G`}/>
+        <SummaryTile label="Dead cap" value={f.deadCap ? fmtM(f.deadCap) : "$0"}
+                     sub={f.deadCap ? "Buyouts and retained salary" : "No buyouts or retained salary"}/>
+        <SummaryTile label="Free agents" value={f.ufa + f.rfa} sub={`${f.ufa} UFA · ${f.rfa} RFA after ${f.season}`}/>
+        {isNow && ltirPlayers.length > 0 && (
+          <SummaryTile label="LTIR relief" value={fmtM(f.ltirPool)} tone="amber" title={LTIR_NOTE}
+                       sub={`${ltirPlayers.length} player${ltirPlayers.length === 1 ? "" : "s"} · ${fmtM(team.ltirCapHit)} cap hits`}/>
+        )}
+        {isNow && limits && (
+          <SummaryTile label="Contracts" value={`${limits.contracts} / ${MAX_CONTRACTS}`}
+                       tone={limits.contracts >= MAX_CONTRACTS - 2 ? "amber" : undefined}
+                       sub={`${limits.contracts >= MAX_CONTRACTS ? "At the limit · " : limits.contracts >= MAX_CONTRACTS - 2 ? "Near the limit · " : ""}retained ${limits.retained} / ${MAX_RETAINED}`}/>
+        )}
+      </div>
+
+      <div className="totals-title">Team totals by season</div>
+      <div className="totals-table-wrap">
+        <table className="totals-table">
+          <thead>
+            <tr>
+              <th scope="col"><span className="sr-only">Total</span></th>
+              {totals.map(t => (
+                <th key={t.season} scope="col" className={t.season === f.season ? "focus-col" : ""}>
+                  <button onClick={() => onFocus(t.season)} aria-pressed={t.season === f.season}>{t.season}{projMark(t)}</button>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(([label, cell]) => (
+              <tr key={label}>
+                <th scope="row">{label}</th>
+                {totals.map(t => <td key={t.season} className={t.season === f.season ? "focus-col" : ""}>{cell(t)}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {totals.some(t => t.projected) && <div className="totals-note">* Projected ceiling</div>}
+    </div>
+  );
+}
+
 function CapSheetView({ team, data, season, capCeiling }){
   const seasons = data.meta?.seasons || [];
   const stale = data.meta?.staleTeams?.[team.abbr];
@@ -796,6 +894,13 @@ function CapSheetView({ team, data, season, capCeiling }){
   }, [team.abbr, season]);
   const curIdx = seasons.indexOf(season);
   const displaySeasons = seasons.slice(curIdx, curIdx + 6);
+  // The season the summary is rolled to; its column is highlighted below too.
+  const totals = useMemo(() => teamSeasonTotals(data, team.abbr, displaySeasons), [data, team.abbr, season]);
+  const [focus, setFocus] = useState(displaySeasons[0]);
+  useEffect(() => setFocus(displaySeasons[0]), [team.abbr, season]);
+  const focusIdx = Math.max(0, displaySeasons.indexOf(focus));
+  const record = data.standings?.[data.meta?.defaultSeason]?.[team.abbr];
+  const ages = team.roster.filter(p => p.category === "active" && p.age > 0).map(p => p.age);
 
   // Every contract each player has with this team, in order, so an extension
   // that starts after the current deal shows its own cap hits.
@@ -844,22 +949,14 @@ function CapSheetView({ team, data, season, capCeiling }){
           <span style={{width:10,height:10,borderRadius:"50%",background: team.color || "#16a34a",display:"inline-block"}}/>
           <span style={{fontSize:22,fontWeight:700,fontFamily:"'Barlow Condensed',sans-serif"}}>{team.name}</span>
         </div>
-        <div style={{fontSize:13,color:"#6b7685",paddingBottom:2}}>{team.division} Division · cap sheet</div>
-        <div style={{marginLeft:"auto",display:"flex",gap:18,alignItems:"center"}}>
-          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(capCeiling)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Ceiling</div></div>
-          <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(team.payroll)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap Hit</div></div>
-          {team.ltirCapHit > 0 && (
-            <div style={{textAlign:"right"}} title={`LTIR players' cap hits: ${fmtM(team.ltirCapHit)}. Relief is the part needed to cover going over the ceiling, estimated from today's payroll; Spotrac doesn't publish it.`}>
-              <div style={{fontSize:17,fontWeight:700,color:"#b45309",fontFamily:"'Space Mono',monospace"}}>{fmtM(team.ltirPool)}</div>
-              <div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>LTIR Relief</div>
-            </div>
-          )}
-          <div style={{textAlign:"right"}} title={team.capStatus === "ltir" ? LTIR_NOTE : undefined}>
-            <div style={{fontSize:17,fontWeight:700,color: team.capStatus === "ltir" ? "#b45309" : team.spaceWithLtir < 0 ? "#d6453f" : "#16a34a",fontFamily:"'Space Mono',monospace"}}>{signedSpace(team.spaceWithLtir)}</div>
-            <div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>{team.capStatus === "over" ? "Over the cap" : "Space"}</div>
-          </div>
+        <div className="team-facts">
+          {team.division} Division
+          {record && <> · {record.w}-{record.l}-{record.ot}, {record.w * 2 + record.ot} pts{data.meta?.standingsAsOf ? ` (as of ${data.meta.standingsAsOf})` : ""}</>}
+          {ages.length > 0 && <> · average age {(ages.reduce((a, b) => a + b, 0) / ages.length).toFixed(1)}</>}
         </div>
       </div>
+
+      <TeamSummary team={team} data={data} totals={totals} focus={focus} onFocus={setFocus}/>
 
       {stale && (
         <div className="stale-banner" role="note">
@@ -875,21 +972,21 @@ function CapSheetView({ team, data, season, capCeiling }){
             <tr style={{borderBottom:"1px solid #e6eaf0"}}>
               <th className="cap-sheet-player" style={{textAlign:"left",padding:"11px 14px",fontSize:11,fontWeight:600,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Player</th>
               {displaySeasons.map((s, i) => (
-                <th key={s} style={{textAlign:"right",padding:"11px 14px",fontSize:11,fontWeight:i===0?700:600,
-                  color:i===0?"#15803d":"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em",
-                  borderBottom:i===0?"2px solid #16a34a":"none"}}>{s}</th>
+                <th key={s} className={`season-col ${i === focusIdx ? "focus-col" : ""}`}>
+                  <button onClick={() => setFocus(s)} aria-pressed={i === focusIdx}>{s}</button>
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {[["Forwards", F], ["Defense", D], ["Goaltenders", G]].filter(([, rows]) => rows.length).map(([label, rows], i) => (
-              <CapSheetGroup key={label} label={label} rows={rows} displaySeasons={displaySeasons} spaced={i > 0}/>
+              <CapSheetGroup key={label} label={label} rows={rows} displaySeasons={displaySeasons} spaced={i > 0} focusIdx={focusIdx}/>
             ))}
           </tbody>
           <tfoot>
             <tr style={{borderTop:"2px solid #d6e6dc",background:"#f3faf6"}}>
               <td style={{padding:"11px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.05em"}}>Players' cap hits</td>
-              {grand.map((t, i) => <td key={i} style={{padding:"11px 14px",textAlign:"right",fontWeight:700}}>{t? fmtFull(t):""}</td>)}
+              {grand.map((t, i) => <td key={i} className={i === focusIdx ? "focus-col" : undefined} style={{padding:"11px 14px",textAlign:"right",fontWeight:700}}>{t? fmtFull(t):""}</td>)}
             </tr>
           </tfoot>
         </table>

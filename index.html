@@ -641,6 +641,59 @@
     font-family: 'Barlow', sans-serif; font-size: 11px; letter-spacing: 0;
   }
   .cap-sheet tr.cap-group-gap > td { height: 22px; padding: 0; background: #fff; }
+
+  /* TEAM SUMMARY (top of a team page): season pills, rolling tiles and the
+     totals-by-season table. The chosen season's column is tinted here and in
+     the cap sheet below. */
+  .team-facts { font-size: 13px; color: #6b7685; padding-bottom: 2px; }
+  .team-summary { margin-bottom: 18px; }
+  .summary-seasons { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .summary-season, .summary-step {
+    font-family: 'Barlow', sans-serif; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+    padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border2); background: #fff;
+    color: var(--text2); cursor: pointer;
+  }
+  .summary-season:hover, .summary-step:hover:not(:disabled) { border-color: #16a34a; color: #15803d; }
+  .summary-season.active { background: #16a34a; border-color: #16a34a; color: #fff; }
+  .summary-step:disabled { opacity: 0.4; cursor: default; }
+  .summary-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .summary-tile { background: #f7faf8; border: 1px solid #e6eaf0; border-radius: 10px; padding: 12px; min-width: 0; }
+  .summary-tile.green { background: #f3faf6; border-color: #c4e9d3; }
+  .summary-tile.amber { background: #fff8eb; border-color: #fde68a; }
+  .summary-tile.red { background: #fdf0f0; border-color: #f5c6c6; }
+  .summary-tile-label {
+    font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: #6b7685;
+  }
+  .summary-tile-value { font-family: 'Space Mono', monospace; font-size: 19px; font-weight: 700; margin-top: 4px; color: var(--text); }
+  .summary-tile.green .summary-tile-value { color: #15803d; }
+  .summary-tile.amber .summary-tile-value { color: #b45309; }
+  .summary-tile.red .summary-tile-value { color: #d6453f; }
+  .summary-tile-sub { font-size: 12px; color: #6b7685; margin-top: 2px; }
+  .totals-title {
+    margin: 18px 0 6px; font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase; color: #15803d;
+  }
+  .totals-table-wrap { overflow-x: auto; border: 1px solid #e6eaf0; border-radius: 10px; }
+  .totals-table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .totals-table th, .totals-table td { padding: 7px 12px; text-align: right; border-bottom: 1px solid #eef2f6; }
+  .totals-table tbody tr:last-child > * { border-bottom: none; }
+  .totals-table thead th { border-bottom: 1px solid #e6eaf0; }
+  .cap-sheet .totals-table th:first-child { text-align: left; font-weight: 600; color: #5b6776; background: #fff; }
+  .totals-table thead button, .cap-sheet th.season-col button {
+    all: unset; cursor: pointer; font-family: 'Barlow', sans-serif; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase; color: #6b7685;
+  }
+  .totals-table thead th.focus-col button, .cap-sheet th.season-col.focus-col button { color: #15803d; font-weight: 700; }
+  .totals-table thead th.focus-col, .cap-sheet th.season-col.focus-col { box-shadow: inset 0 -2px 0 #16a34a; }
+  .totals-table td.focus-col, .cap-sheet td.focus-col { background-color: rgba(22,163,74,0.07); }
+  .cap-sheet th.season-col { text-align: right; padding: 11px 14px; }
+  .space-ok { color: #15803d; font-weight: 600; }
+  .totals-note { margin-top: 6px; font-size: 11px; color: #97a2b0; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
   .cap-sheet-frame { position: relative; }
   .cap-sheet-fade {
     position: absolute; top: 0; right: 1px; bottom: 1px; width: 32px; pointer-events: none;
