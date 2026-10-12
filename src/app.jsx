@@ -726,16 +726,24 @@ function CapCell({ cell }){
     </td>
   );
 }
-function CapSheetGroup({ label, rows, displaySeasons }){
+// Forwards, Defense and Goaltenders each start with a solid green header bar,
+// and a white gap separates one group from the next.
+function CapSheetGroup({ label, rows, displaySeasons, spaced }){
   if(rows.length === 0) return null;
   const totals = displaySeasons.map((_, ci) => rows.reduce((s, r) => { const c = r.cells[ci]; return s + (c && c.v && !c.muted ? c.v : 0); }, 0));
   return (
     <React.Fragment>
-      <tr style={{background:"#f3faf6",borderTop:"1px solid #e6eaf0",borderBottom:"1px solid #e6eaf0"}}>
-        <td style={{padding:"8px 14px",fontSize:11,fontWeight:700,color:"#15803d",textTransform:"uppercase",letterSpacing:"0.06em"}}>
-          {label} <span style={{color:"#6b7685",fontWeight:500}}>{rows.length}</span>
-        </td>
-        {totals.map((t, i) => <td key={i} style={{padding:"8px 14px",textAlign:"right",fontSize:12,fontWeight:700,color:"#15803d"}}>{t? fmtFull(t) : ""}</td>)}
+      {spaced && (
+        <tr className="cap-group-gap" aria-hidden="true">
+          <td/>
+          {displaySeasons.map(s => <td key={s}/>)}
+        </tr>
+      )}
+      <tr className="cap-group-head">
+        <th scope="rowgroup" style={{textAlign:"left"}}>
+          {label}<span className="cap-group-count">{rows.length}</span>
+        </th>
+        {totals.map((t, i) => <td key={i}>{t? fmtFull(t) : ""}</td>)}
       </tr>
       {rows.map((r, ri) => {
         const chip = CATEGORY_CHIPS[r.category];
@@ -874,9 +882,9 @@ function CapSheetView({ team, data, season, capCeiling }){
             </tr>
           </thead>
           <tbody>
-            <CapSheetGroup label="Forwards" rows={F} displaySeasons={displaySeasons}/>
-            <CapSheetGroup label="Defense" rows={D} displaySeasons={displaySeasons}/>
-            <CapSheetGroup label="Goaltenders" rows={G} displaySeasons={displaySeasons}/>
+            {[["Forwards", F], ["Defense", D], ["Goaltenders", G]].filter(([, rows]) => rows.length).map(([label, rows], i) => (
+              <CapSheetGroup key={label} label={label} rows={rows} displaySeasons={displaySeasons} spaced={i > 0}/>
+            ))}
           </tbody>
           <tfoot>
             <tr style={{borderTop:"2px solid #d6e6dc",background:"#f3faf6"}}>
