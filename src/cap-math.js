@@ -182,3 +182,36 @@ export function buildTeamData(data, season, capCeiling) {
     };
   });
 }
+
+// One team's totals for each season, for the summary at the top of its cap
+// sheet: committed cap hit, cap space (with LTIR relief in the current
+// season), who's signed, dead cap (buyouts, retained salary and other
+// charges), and the contracts ending after that season — unless the player
+// has already signed his next contract with the team.
+export function teamSeasonTotals(data, abbr, seasons) {
+  const starts = new Set((data.contracts || []).map(c => `${c.team}|${c.playerId}|${c.startSeason}`));
+  return seasons.map((season) => {
+    const cap = data.meta?.caps?.[season] || {};
+    const team = buildTeamData(data, season, safeNum(cap.ceiling)).find(t => t.abbr === abbr);
+    const signed = (team?.roster || []).filter(p => p.capHit > 0);
+    const next = seasonAt(season, 1);
+    const ending = (data.contracts || []).filter(c =>
+      c.team === abbr && endSeasonFor(c) === season && !starts.has(`${c.team}|${c.playerId}|${next}`));
+    return {
+      season,
+      ceiling: safeNum(cap.ceiling),
+      projected: !!cap.projected,
+      payroll: team?.payroll || 0,
+      space: team?.spaceWithLtir || 0,
+      capStatus: team?.capStatus || "under",
+      ltirPool: team?.ltirPool || 0,
+      deadCap: team?.adjustmentCap || 0,
+      signed: signed.length,
+      forwards: signed.filter(p => p.pos !== "D" && p.pos !== "G").length,
+      defense: signed.filter(p => p.pos === "D").length,
+      goalies: signed.filter(p => p.pos === "G").length,
+      ufa: ending.filter(c => c.expiryStatus === "UFA").length,
+      rfa: ending.filter(c => c.expiryStatus === "RFA").length,
+    };
+  });
+}
