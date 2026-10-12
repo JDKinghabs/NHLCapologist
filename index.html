@@ -596,12 +596,26 @@
   input:focus-visible, [tabindex]:focus-visible {
     outline: 2px solid var(--ice2) !important; outline-offset: 2px;
   }
-  .cap-sheet { scroll-margin-top: 72px; }
+  /* TEAM PAGE */
+  .back-link {
+    display: inline-flex; align-items: center; gap: 4px; margin-bottom: 12px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase; color: var(--ice2); text-decoration: none;
+  }
+  .back-link:hover { text-decoration: underline; }
   /* Player names stay visible while the season columns scroll sideways. */
   .cap-sheet thead tr { background: #fff; }
   .cap-sheet th:first-child, .cap-sheet td:first-child {
     position: sticky; left: 0; z-index: 1; background: inherit;
   }
+  .cap-sheet-player { min-width: 180px; }
+  .cap-sheet-frame { position: relative; }
+  .cap-sheet-fade {
+    position: absolute; top: 0; right: 1px; bottom: 1px; width: 32px; pointer-events: none;
+    border-radius: 0 0 12px 0;
+    background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.95));
+  }
+  .swipe-hint { font-size: 12px; color: var(--text2); text-align: right; margin: -6px 0 6px; }
   .nav-btn, .filter-btn { white-space: nowrap; }
 
   /* STATIC SUMMARY (shown to crawlers, and briefly before the app loads) */
@@ -649,6 +663,10 @@
     .header-nav { flex-wrap: wrap; overflow-x: visible; }
     .nav-btn { padding: 6px 6px; font-size: 12px; letter-spacing: 0.04em; }
     .nav-extra { display: none; }
+    /* A slimmer pinned player column leaves room for the season columns. */
+    .cap-sheet { padding: 14px 10px 12px !important; }
+    .cap-sheet-player { min-width: 128px; }
+    .cap-sheet .clause-text { display: none; }
   }
 </style>
 </head>
