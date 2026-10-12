@@ -252,9 +252,6 @@ function StandingsView({ teamData, data, season, capCeiling, onTeamClick, select
           />
         </div>
       )}
-      {selectedTeam && (
-        <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={() => onTeamClick(selectedTeam)}/>
-      )}
     </div>
   );
 }
@@ -686,12 +683,12 @@ function CapSheetGroup({ label, rows, displaySeasons }){
         return (
           <tr key={r.id || ri} style={{borderBottom:"1px solid #eef2f6", background: ri%2 ? "#f7faf8" : "#fff"}}>
             <td style={{padding:"9px 14px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:6,fontWeight:600,fontSize:14}}>
+              <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:"2px 6px",fontWeight:600,fontSize:14}}>
                 {lastFirst(r.name)}
-                <span style={{display:"inline-flex",gap:5,alignItems:"center"}}>
+                <span style={{display:"inline-flex",gap:5,alignItems:"center",whiteSpace:"nowrap"}}>
                   {r.clause && (
                     <span title={CLAUSE_LABELS[r.clause] || r.clause} style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:"#5b6776"}}>
-                      <IcoShield ntc={/NTC/.test(r.clause)}/>{r.clause}
+                      <IcoShield ntc={/NTC/.test(r.clause)}/><span className="clause-text">{r.clause}</span>
                     </span>
                   )}
                   {chip && <span style={{background:chip.background,color:chip.color,fontSize:10,fontWeight:600,padding:"1px 5px",borderRadius:5}}>{chip.label}</span>}
@@ -708,12 +705,21 @@ function CapSheetGroup({ label, rows, displaySeasons }){
     </React.Fragment>
   );
 }
-function CapSheetView({ team, data, season, capCeiling, onClose }){
+function CapSheetView({ team, data, season, capCeiling }){
   const seasons = data.meta?.seasons || [];
-  const sheetRef = useRef(null);
+  // On narrow screens the season columns scroll sideways; show a fade and a
+  // hint while there are more columns to the right.
+  const scrollRef = useRef(null);
+  const [moreRight, setMoreRight] = useState(false);
+  const updateMoreRight = () => {
+    const el = scrollRef.current;
+    if (el) setMoreRight(el.scrollWidth - el.clientWidth - el.scrollLeft > 4);
+  };
   useEffect(() => {
-    sheetRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [team.abbr]);
+    updateMoreRight();
+    window.addEventListener("resize", updateMoreRight);
+    return () => window.removeEventListener("resize", updateMoreRight);
+  }, [team.abbr, season]);
   const curIdx = seasons.indexOf(season);
   const displaySeasons = seasons.slice(curIdx, curIdx + 6);
 
@@ -754,7 +760,7 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
   const grand = displaySeasons.map((_, ci) => [...F,...D,...G].reduce((s,r)=>{const c=r.cells[ci]; return s+(c&&c.v&&!c.muted?c.v:0);},0));
 
   return (
-    <section ref={sheetRef} className="cap-sheet" aria-label={`${team.name} cap sheet`} style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:14,padding:"18px 18px 16px",marginTop:24,color:"#1d2733",fontFamily:"'Barlow',sans-serif"}}>
+    <section className="cap-sheet" aria-label={`${team.name} cap sheet`} style={{background:"#fff",border:"1px solid #e6eaf0",borderRadius:14,padding:"18px 18px 16px",color:"#1d2733",fontFamily:"'Barlow',sans-serif"}}>
       <div style={{display:"flex",alignItems:"flex-end",gap:12,marginBottom:16,flexWrap:"wrap"}}>
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{width:10,height:10,borderRadius:"50%",background: team.color || "#16a34a",display:"inline-block"}}/>
@@ -765,16 +771,17 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
           <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(capCeiling)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Ceiling</div></div>
           <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,fontFamily:"'Space Mono',monospace"}}>{fmtM(team.payroll)}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Cap Hit</div></div>
           <div style={{textAlign:"right"}}><div style={{fontSize:17,fontWeight:700,color: team.space<0?"#d6453f":"#16a34a",fontFamily:"'Space Mono',monospace"}}>{team.space<0?"-":"+"}{fmtM(Math.abs(team.space))}</div><div style={{fontSize:11,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Space</div></div>
-          <button onClick={onClose} aria-label="Close cap sheet" title="Close" style={{background:"#f3f6f9",border:"1px solid #d8dee7",color:"#5b6776",cursor:"pointer",width:30,height:30,borderRadius:6,fontSize:15}}>✕</button>
         </div>
       </div>
 
+      {moreRight && <div className="swipe-hint" aria-hidden="true">Swipe for later seasons →</div>}
       <div style={{height:3,background:"#16a34a",borderRadius:"3px 3px 0 0"}}/>
-      <div style={{overflowX:"auto",border:"1px solid #e6eaf0",borderTop:"none",borderRadius:"0 0 12px 12px"}}>
+      <div className="cap-sheet-frame">
+      <div ref={scrollRef} onScroll={updateMoreRight} style={{overflowX:"auto",border:"1px solid #e6eaf0",borderTop:"none",borderRadius:"0 0 12px 12px"}}>
         <table style={{width:"100%",borderCollapse:"collapse",minWidth:760,fontVariantNumeric:"tabular-nums",background:"#fff"}}>
           <thead>
             <tr style={{borderBottom:"1px solid #e6eaf0"}}>
-              <th style={{textAlign:"left",padding:"11px 14px",fontSize:11,fontWeight:600,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em",minWidth:180}}>Player</th>
+              <th className="cap-sheet-player" style={{textAlign:"left",padding:"11px 14px",fontSize:11,fontWeight:600,color:"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em"}}>Player</th>
               {displaySeasons.map((s, i) => (
                 <th key={s} style={{textAlign:"right",padding:"11px 14px",fontSize:11,fontWeight:i===0?700:600,
                   color:i===0?"#15803d":"#6b7685",textTransform:"uppercase",letterSpacing:"0.05em",
@@ -794,6 +801,8 @@ function CapSheetView({ team, data, season, capCeiling, onClose }){
             </tr>
           </tfoot>
         </table>
+      </div>
+      {moreRight && <div className="cap-sheet-fade" aria-hidden="true"/>}
       </div>
       <div style={{display:"flex",gap:16,flexWrap:"wrap",marginTop:12,fontSize:12,color:"#5b6776",alignItems:"center"}}>
         <span style={{display:"inline-flex",alignItems:"center",gap:5}}><IcoShield/> NMC / <IcoShield ntc/> NTC (M- = modified)</span>
@@ -880,6 +889,12 @@ function App() {
     if (route) document.title = pageTitle(route, selectedTeam?.name);
   }, [route, selectedTeam]);
 
+  // A team page opens at the top; going back to a list lets the browser
+  // restore where you were.
+  useEffect(() => {
+    if (selectedTeamAbbr) window.scrollTo(0, 0);
+  }, [selectedTeamAbbr]);
+
   const filtered = useMemo(() => {
     let t = teamData;
     if(divFilter !== "all") t = t.filter(x=>x.division === divFilter);
@@ -916,7 +931,7 @@ function App() {
   const overCap = teamData.filter(t=>t.space<0).length;
 
   function handleTeamClick(team) {
-    navigate({ team: selectedTeamAbbr === team.abbr ? null : team.abbr });
+    navigate({ team: team.abbr });
   }
 
   return (
@@ -947,6 +962,14 @@ function App() {
       </header>
 
       <main className="main">
+        {selectedTeam && (
+          <div className="team-page">
+            <a className="back-link" {...linkTo({ team: null })}>← {view === "standings" ? "Standings" : "All teams"}</a>
+            <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling}/>
+          </div>
+        )}
+
+        {!selectedTeam && view === "dashboard" && (<>
         <div className="league-bar">
           <div className="league-stat">
             <div className="league-stat-label">Salary Cap Ceiling</div>
@@ -975,7 +998,6 @@ function App() {
           {data.meta?.notes ? <span>• {data.meta.notes}</span> : null}
         </div>
 
-        {view === "dashboard" && (<>
           <div className="filters">
             <input
               className="search-input"
@@ -1010,18 +1032,13 @@ function App() {
                 key={team.abbr}
                 team={team}
                 capCeiling={capCeiling}
-                selected={selectedTeam?.abbr===team.abbr}
-                link={linkTo({ team: selectedTeam?.abbr === team.abbr ? null : team.abbr })}
+                link={linkTo({ team: team.abbr })}
               />
             ))}
           </div>
-
-          {selectedTeam && (
-            <CapSheetView team={selectedTeam} data={data} season={season} capCeiling={capCeiling} onClose={()=>navigate({ team: null })} />
-          )}
         </>)}
 
-        {view === "standings" && (<>
+        {!selectedTeam && view === "standings" && (<>
           <div className="section-header">
             <div className="section-title">Standings <span style={{color:"var(--text3)",fontSize:13,fontWeight:400}}>({season})</span></div>
             <div className="section-line"/>

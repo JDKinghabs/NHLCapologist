@@ -47,21 +47,31 @@ async function openPage(width, urlPath) {
     if (host !== "127.0.0.1" && !/^fonts\./.test(host)) failures.push(`${width}px third-party request: ${request.url()}`);
   });
   await page.goto(base + urlPath);
-  await page.waitForSelector(".league-bar", { timeout: 15000 });
+  // The footer only renders once the data has loaded, on every view.
+  await page.waitForSelector(".site-footer", { timeout: 15000 });
   return page;
 }
 const pathOf = (page) => new URL(page.url()).pathname;
 
 try {
   const page = await openPage(1400, "/teams/TOR");
-  check((await page.locator(".team-card").count()) === data.teams.length, `dashboard shows all ${data.teams.length} teams`);
-  check((await page.locator(".data-badge.ice").innerText()).includes(ceiling), `header shows the ${season} ceiling ${ceiling}`);
   check((await page.locator(".cap-sheet tbody tr").count()) >= 15, "/teams/TOR opens Toronto's cap sheet");
+  check((await page.locator(".team-card, .league-bar").count()) === 0, "a team page shows only that team");
+  check((await page.locator(".back-link").getAttribute("href")) === "/", "a team page links back to all teams");
+  check((await page.locator(".data-badge.ice").innerText()).includes(ceiling), `header shows the ${season} ceiling ${ceiling}`);
   check((await page.title()) === pageTitle({ season, view: "dashboard" }, toronto), "the page title names the team");
   check((await page.locator(".prerender").count()) === 0, "the app replaces the static summary");
   check((await page.locator(".site-footer").innerText()).includes("Spotrac"), "footer credits the data sources");
 
   // Views render after navigation, so wait for each one.
+  await page.click(".back-link");
+  await page.waitForSelector(".team-card");
+  check(pathOf(page) === "/" && (await page.locator(".team-card").count()) === data.teams.length, `the back link returns to all ${data.teams.length} teams`);
+  check((await page.locator(".league-bar").count()) === 1, "the dashboard shows the league summary");
+  await page.locator('.team-card[href="/teams/TOR"]').click();
+  await page.waitForSelector(".cap-sheet");
+  check(pathOf(page) === "/teams/TOR", "a team card opens the team page");
+
   await page.click('.nav-btn:has-text("Standings")');
   await page.waitForSelector(".standings-division");
   check((await page.locator(".standings-table, .sample-banner").count()) > 0, "standings view renders");
@@ -72,6 +82,12 @@ try {
   await page.goForward();
   await page.waitForSelector(".standings-division");
   check(pathOf(page) === "/standings", "forward returns to standings");
+  await page.locator(".standings-table tbody tr").first().click();
+  await page.waitForSelector(".cap-sheet");
+  check(/^\/standings\/[A-Z]{3}$/.test(pathOf(page)) && (await page.locator(".back-link").getAttribute("href")) === "/standings",
+    "a standings row opens the team page, linking back to standings");
+  await page.goBack();
+  await page.waitForSelector(".standings-division");
 
   await page.click('.nav-btn:has-text("Trade")');
   await page.waitForSelector(".trade-layout");
@@ -95,6 +111,9 @@ try {
     await phone.waitForTimeout(300);
     const width = await phone.evaluate(() => document.documentElement.scrollWidth);
     check(width <= 390, `${urlPath} fits a 390px screen (page width ${width}px)`);
+    if (urlPath === "/teams/TOR") {
+      check(await phone.locator(".swipe-hint").isVisible(), "on a phone the cap sheet says it swipes for later seasons");
+    }
     await phone.close();
   }
 } catch (error) {
