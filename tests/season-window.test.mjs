@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { applyCapCeilings, contractSeasons, currentSeason, rollSeasonWindow, seasonAt } from "../scripts/season-window.mjs";
+import { applyCapCeilings, contractSeasons, currentSeason, firstProjectedSeason, rollSeasonWindow, seasonAt } from "../scripts/season-window.mjs";
 
 test("formats seasons across century boundaries", () => {
   assert.equal(seasonAt("2026-27", 1), "2027-28");
@@ -74,4 +74,18 @@ test("published ceilings replace projections; later seasons project from the las
   assert.deepEqual(data.meta.caps["2028-29"], { ceiling: 127_500_000, floor: 94_200_000, projected: true });
   assert.deepEqual(data.meta.caps["2029-30"], { ceiling: 131_000_000, floor: 96_800_000, projected: true });
   assert.equal(data.meta.caps["2033-34"].ceiling, 145_000_000);
+});
+
+test("a published ceiling the NHL and NHLPA agreed is official, not projected", () => {
+  const data = sampleData();
+  rollSeasonWindow(data, "2026-27");
+  applyCapCeilings(data.meta, { "2027-28": 113_500_000, "2028-29": 127_500_000 });
+  assert.equal(data.meta.caps["2027-28"].projected, false);
+  assert.equal(data.meta.caps["2028-29"].projected, true);
+  assert.equal(firstProjectedSeason(data.meta), "2028-29");
+
+  // A different figure for an agreed season stays labelled as a projection.
+  applyCapCeilings(data.meta, { "2027-28": 115_000_000 });
+  assert.equal(data.meta.caps["2027-28"].projected, true);
+  assert.equal(firstProjectedSeason(data.meta), "2027-28");
 });

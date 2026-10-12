@@ -9,7 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { chromium } from "playwright";
 import { pageTitle } from "../src/routes.js";
-import { buildTeamData } from "../src/cap-math.js";
+import { buildSeasonList, buildTeamData } from "../src/cap-math.js";
 import { createStaticServer } from "./static-server.mjs";
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
@@ -132,6 +132,20 @@ try {
   await stale.waitForSelector(".team-card");
   check((await stale.locator(".stale-note").innerText()).includes("Calgary"), "the dashboard names teams the refresh couldn't read");
   await stale.close();
+
+  // A clause that only starts with an extension is named on the cap sheet.
+  const sheetItem = (team, playerId) => data.capSheets[season][team]?.items.find((item) => item.playerId === playerId);
+  const extension = data.contracts.find((later) => later.clause && later.startSeason > season &&
+    data.contracts.some((c) => c.team === later.team && c.playerId === later.playerId && !c.clause &&
+      buildSeasonList(c.startSeason, c.years).includes(season) && sheetItem(c.team, c.playerId) && !sheetItem(c.team, c.playerId).clause));
+  if (extension) {
+    const ext = await openPage(1400, `/teams/${extension.team}`);
+    await ext.waitForSelector(".cap-sheet");
+    const label = `${extension.clause} from ${extension.startSeason}`;
+    check((await ext.locator(".later-clause", { hasText: label }).count()) >= 1,
+      `a clause that starts with an extension is shown (${extension.team}: ${label})`);
+    await ext.close();
+  }
 
   for (const urlPath of ["/teams/TOR", "/standings", "/trade", "/projections"]) {
     const phone = await openPage(390, urlPath);

@@ -19,7 +19,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { applyCapCeilings, currentSeason, rollSeasonWindow, seasonAt } from "./season-window.mjs";
+import { applyCapCeilings, currentSeason, firstProjectedSeason, rollSeasonWindow, seasonAt } from "./season-window.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = path.resolve(__dirname, "..", "data", "nhl-cap-data.json");
@@ -706,8 +706,16 @@ function rebuildPlayersAndContracts(data, playerInfo, expiries) {
   data.players = [...new Set(contracts.map((contract) => contract.playerId))].map((id) => {
     const player = { ...(existing.get(id) || { id, name: id, pos: "" }), ...(playerInfo.get(id) || {}) };
     if (!(player.age > 0)) delete player.age; // Spotrac lists no age for some prospects
+    player.name = fixNameCase(player.name);
     return player;
   });
+}
+
+// Spotrac types a few names as "Mckenna" / "Mcdonough"; every NHL "Mc" name
+// capitalizes the next letter. ("Mac" names are left alone: both Macdonald
+// and MacDonald exist.)
+function fixNameCase(name) {
+  return String(name || "").replace(/\bMc([a-z])/g, (_, letter) => `Mc${letter.toUpperCase()}`);
 }
 
 // The "Imported from Spotrac ... on <date>" note changes every run, so it is
@@ -923,7 +931,8 @@ async function main() {
   }
 
   data.meta.updated = FETCH_DATE;
-  data.meta.notes = `Cap data refreshed from Spotrac on ${FETCH_DATE}. Cap ceilings after ${season} are projections.`;
+  const projectedFrom = firstProjectedSeason(data.meta);
+  data.meta.notes = `Cap data refreshed from Spotrac on ${FETCH_DATE}.${projectedFrom ? ` Cap ceilings from ${projectedFrom} on are projections.` : ""}`;
   data.meta.schemaVersion = data.meta.schemaVersion || 2;
 
   writeDataAtomic(data);
@@ -940,6 +949,7 @@ export {
   classifySection,
   dropImpossibleCapHits,
   fetchUrl,
+  fixNameCase,
   retryFailedPages,
   updateStaleTeams,
   parsePlayerRows,

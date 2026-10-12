@@ -693,6 +693,7 @@ function CapCell({ cell }){
         title={cell.muted ? "Cap hit if on the NHL roster; not counted while in the minors" : undefined}>
       <span style={{display:"inline-flex",alignItems:"center",gap:5,justifyContent:"flex-end"}}>
         {cell.bonus && <span title={cell.bonus}><IcoCoin/></span>}
+        {cell.clause && <span title={CLAUSE_LABELS[cell.clause] || cell.clause}><IcoShield ntc={/NTC/.test(cell.clause)}/></span>}
         {fmtFull(cell.v)}
       </span>
     </td>
@@ -720,6 +721,12 @@ function CapSheetGroup({ label, rows, displaySeasons }){
                   {r.clause && (
                     <span title={CLAUSE_LABELS[r.clause] || r.clause} style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:"#5b6776"}}>
                       <IcoShield ntc={/NTC/.test(r.clause)}/><span className="clause-text">{r.clause}</span>
+                    </span>
+                  )}
+                  {r.laterClause && (
+                    <span className="later-clause" title={`${CLAUSE_LABELS[r.laterClause.clause] || r.laterClause.clause} in the contract starting ${r.laterClause.from}`}
+                          style={{display:"inline-flex",alignItems:"center",gap:3,fontSize:10,fontWeight:600,color:"#8a94a3"}}>
+                      <IcoShield ntc={/NTC/.test(r.laterClause.clause)}/><span className="clause-text">{r.laterClause.clause} from {r.laterClause.from}</span>
                     </span>
                   )}
                   {chip && <span style={{background:chip.background,color:chip.color,fontSize:10,fontWeight:600,padding:"1px 5px",borderRadius:5}}>{chip.label}</span>}
@@ -769,17 +776,21 @@ function CapSheetView({ team, data, season, capCeiling }){
     const last = deals[deals.length - 1];
     const afterLast = last ? seasonAt(last.startSeason, last.years) : null;
     const bonus = bonusTitle(p);
+    // Each season shows the clause of the contract in force that season, so an
+    // extension's clause appears from the year it starts.
     const cells = displaySeasons.map((s, ci) => {
-      if(ci === 0) return { v: p.capHit, bonus };
+      if(ci === 0) return { v: p.capHit, bonus, clause: p.clause };
       const deal = deals.find(c => buildSeasonList(c.startSeason, c.years).includes(s));
       if(deal){
         const counted = safeNum(deal.capHits?.[s]);
-        return counted > 0 ? { v: counted } : { v: safeNum(deal.aav), muted: true };
+        return counted > 0 ? { v: counted, clause: deal.clause } : { v: safeNum(deal.aav), muted: true, clause: deal.clause };
       }
       if(s === afterLast && last.expiryStatus) return { badge: last.expiryStatus };
       return null;
     });
-    return { ...p, cells };
+    // A clause that only starts with a later contract is named next to the player too.
+    const later = deals.find(c => c.startSeason > displaySeasons[0] && c.clause && c.clause !== p.clause);
+    return { ...p, cells, laterClause: later ? { clause: later.clause, from: later.startSeason } : null };
   }
   const F=[], D=[], G=[];
   team.roster.forEach(p => {
@@ -1119,7 +1130,10 @@ function App() {
           refreshed daily (last update {data.meta?.updated || "unknown"}).
           Standings and team names from the <a href="https://www.nhl.com/standings" target="_blank" rel="noopener noreferrer">NHL</a>
           {data.meta?.standingsAsOf ? ` (as of ${data.meta.standingsAsOf})` : ""}.
-          Cap ceilings after {seasons[0]} are projections.
+          {(() => {
+            const projectedFrom = seasons.find(s => data.meta?.caps?.[s]?.projected);
+            return projectedFrom ? ` Cap ceilings from ${projectedFrom} on are projections.` : "";
+          })()}
         </p>
         <p>IceCap is an independent fan site, not affiliated with the NHL, its teams or Spotrac.</p>
       </footer>
