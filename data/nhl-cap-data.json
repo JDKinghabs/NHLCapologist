@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updated": "2026-10-17",
+    "updated": "2026-10-18",
     "defaultSeason": "2026-27",
     "seasons": [
       "2026-27",
@@ -54,7 +54,7 @@
         "projected": true
       }
     },
-    "notes": "Cap data refreshed from Spotrac on 2026-10-17. Cap ceilings from 2028-29 on are projections.",
+    "notes": "Cap data refreshed from Spotrac on 2026-10-18. Cap ceilings from 2028-29 on are projections.",
     "schemaVersion": 2,
     "capSheetSchema": {
       "itemKinds": [
@@ -83,15 +83,7 @@
         "complete"
       ]
     },
-    "standingsAsOf": "2026-10-16",
-    "staleTeams": {
-      "NYR": {
-        "since": "2026-10-17",
-        "pages": [
-          "2026-27"
-        ]
-      }
-    }
+    "standingsAsOf": "2026-10-17"
   },
   "divisions": [
     "Atlantic",
@@ -3789,6 +3781,12 @@
       "age": 32
     },
     {
+      "id": "SR_20343",
+      "name": "Taylor Raddysh",
+      "pos": "RW",
+      "age": 28
+    },
+    {
       "id": "SR_25061",
       "name": "Eeli Tolvanen",
       "pos": "RW",
@@ -3822,12 +3820,6 @@
       "id": "SR_78421",
       "name": "Noah Laba",
       "pos": "F",
-      "age": 23
-    },
-    {
-      "id": "SR_73921",
-      "name": "Jaroslav Chmelar",
-      "pos": "RW",
       "age": 23
     },
     {
@@ -3885,16 +3877,16 @@
       "age": 28
     },
     {
-      "id": "SR_20343",
-      "name": "Taylor Raddysh",
-      "pos": "RW",
-      "age": 28
-    },
-    {
       "id": "SR_78373",
       "name": "Adam Sykora",
       "pos": "LW",
       "age": 22
+    },
+    {
+      "id": "SR_73921",
+      "name": "Jaroslav Chmelar",
+      "pos": "RW",
+      "age": 23
     },
     {
       "id": "SR_94126",
@@ -17186,6 +17178,18 @@
       "expiryStatus": "UFA"
     },
     {
+      "playerId": "SR_20343",
+      "team": "NYR",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 1500000,
+      "capHits": {
+        "2026-27": 1500000
+      },
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
+    },
+    {
       "playerId": "SR_25061",
       "team": "NYR",
       "startSeason": "2026-27",
@@ -17265,18 +17269,6 @@
       "aav": 945000,
       "capHits": {
         "2026-27": 945000
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
-      "playerId": "SR_73921",
-      "team": "NYR",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 942500,
-      "capHits": {
-        "2026-27": 942500
       },
       "source": "Spotrac",
       "expiryStatus": "RFA"
@@ -17397,18 +17389,6 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_20343",
-      "team": "NYR",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 1500000,
-      "capHits": {
-        "2026-27": 275000
-      },
-      "source": "Spotrac",
-      "expiryStatus": "UFA"
-    },
-    {
       "playerId": "SR_78373",
       "team": "NYR",
       "startSeason": "2026-27",
@@ -17416,6 +17396,18 @@
       "aav": 881666,
       "capHits": {
         "2026-27": 110208
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
+    },
+    {
+      "playerId": "SR_73921",
+      "team": "NYR",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 942500,
+      "capHits": {
+        "2026-27": 82586
       },
       "source": "Spotrac",
       "expiryStatus": "RFA"
@@ -29805,46 +29797,58 @@
   "standings": {
     "2026-27": {
       "VGK": {
+        "gp": 10,
+        "w": 8,
+        "l": 2,
+        "ot": 0
+      },
+      "CAR": {
+        "gp": 9,
+        "w": 7,
+        "l": 1,
+        "ot": 1
+      },
+      "BOS": {
         "gp": 9,
         "w": 7,
         "l": 2,
         "ot": 0
       },
-      "CAR": {
+      "EDM": {
         "gp": 8,
         "w": 6,
         "l": 1,
         "ot": 1
       },
-      "UTA": {
-        "gp": 8,
-        "w": 6,
-        "l": 2,
-        "ot": 0
-      },
-      "BOS": {
-        "gp": 8,
-        "w": 6,
-        "l": 2,
-        "ot": 0
-      },
-      "OTT": {
-        "gp": 8,
-        "w": 6,
-        "l": 2,
-        "ot": 0
-      },
       "NYR": {
+        "gp": 10,
+        "w": 6,
+        "l": 3,
+        "ot": 1
+      },
+      "TBL": {
+        "gp": 8,
+        "w": 6,
+        "l": 2,
+        "ot": 0
+      },
+      "UTA": {
         "gp": 9,
         "w": 6,
         "l": 3,
         "ot": 0
       },
-      "EDM": {
-        "gp": 7,
+      "OTT": {
+        "gp": 9,
+        "w": 6,
+        "l": 3,
+        "ot": 0
+      },
+      "FLA": {
+        "gp": 9,
         "w": 5,
-        "l": 1,
-        "ot": 1
+        "l": 2,
+        "ot": 2
       },
       "COL": {
         "gp": 8,
@@ -29859,40 +29863,58 @@
         "ot": 1
       },
       "SEA": {
-        "gp": 8,
+        "gp": 9,
         "w": 5,
-        "l": 2,
+        "l": 3,
         "ot": 1
       },
-      "TBL": {
-        "gp": 7,
+      "WSH": {
+        "gp": 8,
         "w": 5,
-        "l": 2,
+        "l": 3,
         "ot": 0
       },
       "WPG": {
-        "gp": 7,
-        "w": 4,
-        "l": 1,
-        "ot": 2
-      },
-      "FLA": {
         "gp": 8,
         "w": 4,
         "l": 2,
         "ot": 2
       },
       "BUF": {
+        "gp": 9,
+        "w": 4,
+        "l": 3,
+        "ot": 2
+      },
+      "NYI": {
         "gp": 8,
         "w": 4,
         "l": 3,
         "ot": 1
       },
-      "WSH": {
-        "gp": 7,
+      "DAL": {
+        "gp": 8,
         "w": 4,
         "l": 3,
-        "ot": 0
+        "ot": 1
+      },
+      "NSH": {
+        "gp": 8,
+        "w": 3,
+        "l": 2,
+        "ot": 3
+      },
+      "MTL": {
+        "gp": 8,
+        "w": 4,
+        "l": 3,
+        "ot": 1
+      },
+      "SJS": {
+        "gp": 8,
+        "w": 4,
+        "l": 3,
+        "ot": 1
       },
       "ANA": {
         "gp": 7,
@@ -29901,93 +29923,63 @@
         "ot": 0
       },
       "NJD": {
-        "gp": 7,
+        "gp": 8,
         "w": 4,
-        "l": 3,
+        "l": 4,
         "ot": 0
       },
-      "SJS": {
-        "gp": 7,
-        "w": 4,
-        "l": 3,
-        "ot": 0
-      },
-      "TOR": {
+      "DET": {
         "gp": 8,
         "w": 3,
         "l": 3,
         "ot": 2
       },
-      "NYI": {
-        "gp": 7,
+      "TOR": {
+        "gp": 9,
         "w": 3,
-        "l": 3,
-        "ot": 1
+        "l": 4,
+        "ot": 2
       },
       "STL": {
-        "gp": 7,
-        "w": 3,
-        "l": 3,
-        "ot": 1
-      },
-      "DAL": {
-        "gp": 7,
-        "w": 3,
-        "l": 3,
-        "ot": 1
-      },
-      "NSH": {
-        "gp": 7,
-        "w": 2,
-        "l": 2,
-        "ot": 3
-      },
-      "MTL": {
-        "gp": 7,
-        "w": 3,
-        "l": 3,
-        "ot": 1
-      },
-      "PIT": {
         "gp": 8,
         "w": 3,
         "l": 4,
         "ot": 1
       },
-      "DET": {
-        "gp": 7,
-        "w": 2,
-        "l": 3,
-        "ot": 2
-      },
-      "CHI": {
-        "gp": 8,
+      "PIT": {
+        "gp": 9,
         "w": 3,
         "l": 5,
-        "ot": 0
-      },
-      "VAN": {
-        "gp": 9,
-        "w": 2,
-        "l": 6,
         "ot": 1
       },
       "CBJ": {
-        "gp": 5,
-        "w": 2,
+        "gp": 6,
+        "w": 3,
         "l": 3,
         "ot": 0
       },
-      "PHI": {
+      "CHI": {
         "gp": 9,
-        "w": 0,
+        "w": 3,
+        "l": 6,
+        "ot": 0
+      },
+      "VAN": {
+        "gp": 10,
+        "w": 2,
+        "l": 7,
+        "ot": 1
+      },
+      "PHI": {
+        "gp": 10,
+        "w": 1,
         "l": 6,
         "ot": 3
       },
       "LAK": {
-        "gp": 5,
+        "gp": 6,
         "w": 0,
-        "l": 3,
+        "l": 4,
         "ot": 2
       },
       "CGY": {
@@ -35223,6 +35215,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_20343",
+            "category": "active",
+            "capHit": 1500000,
+            "baseSalary": 1500000
+          },
+          {
+            "kind": "player",
             "playerId": "SR_25061",
             "category": "active",
             "capHit": 1500000,
@@ -35267,15 +35266,6 @@
             "baseSalary": 850000,
             "signingBonus": 95000,
             "incentives": 80000
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_73921",
-            "category": "active",
-            "capHit": 942500,
-            "baseSalary": 850000,
-            "signingBonus": 92500,
-            "incentives": 57500
           },
           {
             "kind": "player",
@@ -35353,22 +35343,24 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_20343",
+            "playerId": "SR_78373",
             "category": "minors",
-            "capHit": 275000,
-            "aav": 1500000,
-            "baseSalary": 1500000,
+            "capHit": 110208,
+            "aav": 881666,
+            "baseSalary": 850000,
             "notes": [
               "Buried"
             ]
           },
           {
             "kind": "player",
-            "playerId": "SR_78373",
+            "playerId": "SR_73921",
             "category": "minors",
-            "capHit": 110208,
-            "aav": 881666,
+            "capHit": 82586,
+            "aav": 942500,
             "baseSalary": 850000,
+            "signingBonus": 92500,
+            "incentives": 57500,
             "notes": [
               "Buried"
             ]
@@ -35558,10 +35550,10 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-16.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-18.",
           "Source URL: https://www.spotrac.com/nhl/new-york-rangers/cap/_/year/2026",
-          "Sections: Active Roster Cap=92035519; Injured List Cap=850000; Long-Term Injured Reserve Cap=12767857; Minor=770472.",
-          "Spotrac total allocations=$106,423,848; cap space=$0."
+          "Sections: Active Roster Cap=92593019; Injured List Cap=850000; Long-Term Injured Reserve Cap=12767857; Minor=578058.",
+          "Spotrac total allocations=$106,788,934; cap space=$0."
         ]
       },
       "PHI": {
@@ -37922,7 +37914,7 @@
           {
             "kind": "player",
             "playerId": "SR_27145",
-            "category": "active",
+            "category": "ir",
             "capHit": 825000,
             "baseSalary": 850000
           },
@@ -38161,9 +38153,9 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-16.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-18.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/cap/_/year/2026",
-          "Sections: Active Roster Cap=99612964; Long-Term Injured Reserve Cap=4500000; Minor=62109.",
+          "Sections: Active Roster Cap=98787964; Injured List Cap=825000; Long-Term Injured Reserve Cap=4500000; Minor=62109.",
           "Spotrac total allocations=$104,175,073; cap space=$0."
         ]
       },
