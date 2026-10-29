@@ -1,6 +1,6 @@
 {
   "meta": {
-    "updated": "2026-10-28",
+    "updated": "2026-10-29",
     "defaultSeason": "2026-27",
     "seasons": [
       "2026-27",
@@ -54,7 +54,7 @@
         "projected": true
       }
     },
-    "notes": "Cap data refreshed from Spotrac on 2026-10-28. Cap ceilings from 2028-29 on are projections.",
+    "notes": "Cap data refreshed from Spotrac on 2026-10-29. Cap ceilings from 2028-29 on are projections.",
     "schemaVersion": 2,
     "capSheetSchema": {
       "itemKinds": [
@@ -83,15 +83,7 @@
         "complete"
       ]
     },
-    "standingsAsOf": "2026-10-27",
-    "staleTeams": {
-      "DAL": {
-        "since": "2026-10-26",
-        "pages": [
-          "multi-year"
-        ]
-      }
-    }
+    "standingsAsOf": "2026-10-28"
   },
   "divisions": [
     "Atlantic",
@@ -2378,6 +2370,12 @@
       "age": 35
     },
     {
+      "id": "SR_32386",
+      "name": "Dakota Joshua",
+      "pos": "C",
+      "age": 30
+    },
+    {
       "id": "SR_16130",
       "name": "Nicholas Paul",
       "pos": "C",
@@ -2462,12 +2460,6 @@
       "age": 36
     },
     {
-      "id": "SR_18927",
-      "name": "Miles Wood",
-      "pos": "LW",
-      "age": 31
-    },
-    {
       "id": "SR_76450",
       "name": "Nick Blankenburg",
       "pos": "D",
@@ -2492,10 +2484,10 @@
       "age": 31
     },
     {
-      "id": "SR_32386",
-      "name": "Dakota Joshua",
-      "pos": "C",
-      "age": 30
+      "id": "SR_18927",
+      "name": "Miles Wood",
+      "pos": "LW",
+      "age": 31
     },
     {
       "id": "SR_31723",
@@ -4391,12 +4383,6 @@
       "age": 24
     },
     {
-      "id": "SR_31783",
-      "name": "Elmer Soderblom",
-      "pos": "RW",
-      "age": 25
-    },
-    {
       "id": "SR_78428",
       "name": "Sergei Murashov",
       "pos": "G",
@@ -4409,22 +4395,10 @@
       "age": 26
     },
     {
-      "id": "SR_94217",
-      "name": "Chase Pietila",
-      "pos": "D",
-      "age": 22
-    },
-    {
       "id": "SR_78324",
       "name": "Rutger McGroarty",
       "pos": "LW",
       "age": 22
-    },
-    {
-      "id": "SR_97585",
-      "name": "Avery Hayes",
-      "pos": "F",
-      "age": 24
     },
     {
       "id": "SR_16137",
@@ -4451,16 +4425,34 @@
       "age": 35
     },
     {
-      "id": "SR_89371",
-      "name": "Justin Brazeau",
+      "id": "SR_31783",
+      "name": "Elmer Soderblom",
       "pos": "RW",
-      "age": 28
+      "age": 25
     },
     {
       "id": "SR_99331",
       "name": "Benjamin Kindel",
       "pos": "C",
       "age": 19
+    },
+    {
+      "id": "SR_89371",
+      "name": "Justin Brazeau",
+      "pos": "RW",
+      "age": 28
+    },
+    {
+      "id": "SR_97585",
+      "name": "Avery Hayes",
+      "pos": "F",
+      "age": 24
+    },
+    {
+      "id": "SR_94217",
+      "name": "Chase Pietila",
+      "pos": "D",
+      "age": 22
     },
     {
       "id": "SR_27129",
@@ -4619,6 +4611,12 @@
       "age": 27
     },
     {
+      "id": "SR_48850",
+      "name": "Logan Thompson",
+      "pos": "G",
+      "age": 29
+    },
+    {
       "id": "SR_9286",
       "name": "Boone Jenner",
       "pos": "C",
@@ -4708,18 +4706,6 @@
       "age": 27
     },
     {
-      "id": "SR_27194",
-      "name": "Mitchell Gibson",
-      "pos": "G",
-      "age": 27
-    },
-    {
-      "id": "SR_48850",
-      "name": "Logan Thompson",
-      "pos": "G",
-      "age": 29
-    },
-    {
       "id": "SR_21684",
       "name": "Matt Roy",
       "pos": "D",
@@ -4742,6 +4728,12 @@
       "name": "Justin Holl",
       "pos": "D",
       "age": 35
+    },
+    {
+      "id": "SR_27194",
+      "name": "Mitchell Gibson",
+      "pos": "G",
+      "age": 27
     },
     {
       "id": "SR_16638",
@@ -5492,12 +5484,6 @@
       "age": 22
     },
     {
-      "id": "SR_106703",
-      "name": "Dylan Hryckowian",
-      "pos": "F",
-      "age": 22
-    },
-    {
       "id": "SR_21115",
       "name": "Kyle Capobianco",
       "pos": "D",
@@ -5556,6 +5542,12 @@
       "name": "Cameron Hughes",
       "pos": "C",
       "age": 30
+    },
+    {
+      "id": "SR_106703",
+      "name": "Dylan Hryckowian",
+      "pos": "F",
+      "age": 22
     },
     {
       "id": "SR_97625",
@@ -7608,12 +7600,6 @@
       "age": 30
     },
     {
-      "id": "SR_17827",
-      "name": "Zach Hyman",
-      "pos": "C",
-      "age": 34
-    },
-    {
       "id": "SR_13529",
       "name": "Tristan Jarry",
       "pos": "G",
@@ -7630,6 +7616,12 @@
       "name": "Connor Murphy",
       "pos": "D",
       "age": 33
+    },
+    {
+      "id": "SR_15276",
+      "name": "Jason Dickinson",
+      "pos": "C",
+      "age": 32
     },
     {
       "id": "SR_49805",
@@ -7728,10 +7720,10 @@
       "age": 32
     },
     {
-      "id": "SR_15276",
-      "name": "Jason Dickinson",
+      "id": "SR_17827",
+      "name": "Zach Hyman",
       "pos": "C",
-      "age": 32
+      "age": 34
     },
     {
       "id": "SR_16298",
@@ -8195,12 +8187,6 @@
       "age": 34
     },
     {
-      "id": "SR_15222",
-      "name": "Alexander Wennberg",
-      "pos": "C",
-      "age": 32
-    },
-    {
       "id": "SR_25031",
       "name": "Kiefer Sherwood",
       "pos": "LW",
@@ -8285,18 +8271,6 @@
       "age": 21
     },
     {
-      "id": "SR_94139",
-      "name": "Igor Chernyshov",
-      "pos": "LW",
-      "age": 21
-    },
-    {
-      "id": "SR_84615",
-      "name": "Luca Cagnoni",
-      "pos": "D",
-      "age": 22
-    },
-    {
       "id": "SR_73786",
       "name": "Nolan Allan",
       "pos": "D",
@@ -8309,10 +8283,40 @@
       "age": 27
     },
     {
+      "id": "SR_78337",
+      "name": "Filip Bystedt",
+      "pos": "C",
+      "age": 22
+    },
+    {
+      "id": "SR_20322",
+      "name": "Libor Hajek",
+      "pos": "D",
+      "age": 28
+    },
+    {
       "id": "SR_6376",
       "name": "Logan Couture",
       "pos": "C",
       "age": 37
+    },
+    {
+      "id": "SR_15222",
+      "name": "Alexander Wennberg",
+      "pos": "C",
+      "age": 32
+    },
+    {
+      "id": "SR_94139",
+      "name": "Igor Chernyshov",
+      "pos": "LW",
+      "age": 21
+    },
+    {
+      "id": "SR_84615",
+      "name": "Luca Cagnoni",
+      "pos": "D",
+      "age": 22
     },
     {
       "id": "SR_24995",
@@ -8374,12 +8378,6 @@
       "age": 22
     },
     {
-      "id": "SR_78337",
-      "name": "Filip Bystedt",
-      "pos": "C",
-      "age": 22
-    },
-    {
       "id": "SR_84514",
       "name": "Quentin Musty",
       "pos": "LW",
@@ -8395,12 +8393,6 @@
       "id": "SR_28722",
       "name": "Tye Felhaber",
       "pos": "C",
-      "age": 28
-    },
-    {
-      "id": "SR_20322",
-      "name": "Libor Hajek",
-      "pos": "D",
       "age": 28
     },
     {
@@ -13964,6 +13956,20 @@
       "expiryStatus": "UFA"
     },
     {
+      "playerId": "SR_32386",
+      "team": "TOR",
+      "startSeason": "2026-27",
+      "years": 2,
+      "aav": 3250000,
+      "capHits": {
+        "2026-27": 3250000,
+        "2027-28": 3250000
+      },
+      "source": "Spotrac",
+      "clause": "M-NTC",
+      "expiryStatus": "UFA"
+    },
+    {
       "playerId": "SR_16130",
       "team": "TOR",
       "startSeason": "2026-27",
@@ -14162,21 +14168,6 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_18927",
-      "team": "TOR",
-      "startSeason": "2026-27",
-      "years": 3,
-      "aav": 2500000,
-      "capHits": {
-        "2026-27": 2500000,
-        "2027-28": 2500000,
-        "2028-29": 2500000
-      },
-      "source": "Spotrac",
-      "clause": "M-NTC",
-      "expiryStatus": "UFA"
-    },
-    {
       "playerId": "SR_76450",
       "team": "TOR",
       "startSeason": "2026-27",
@@ -14228,14 +14219,15 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_32386",
+      "playerId": "SR_18927",
       "team": "TOR",
       "startSeason": "2026-27",
-      "years": 2,
-      "aav": 3250000,
+      "years": 3,
+      "aav": 2500000,
       "capHits": {
-        "2026-27": 3250000,
-        "2027-28": 3250000
+        "2026-27": 2500000,
+        "2027-28": 2500000,
+        "2028-29": 2500000
       },
       "source": "Spotrac",
       "clause": "M-NTC",
@@ -18611,18 +18603,6 @@
       "expiryStatus": "RFA"
     },
     {
-      "playerId": "SR_31783",
-      "team": "PIT",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 1125000,
-      "capHits": {
-        "2026-27": 1125000
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
       "playerId": "SR_78428",
       "team": "PIT",
       "startSeason": "2026-27",
@@ -18647,19 +18627,6 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_94217",
-      "team": "PIT",
-      "startSeason": "2026-27",
-      "years": 2,
-      "aav": 960000,
-      "capHits": {
-        "2026-27": 846108,
-        "2027-28": 960000
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
       "playerId": "SR_78324",
       "team": "PIT",
       "startSeason": "2026-27",
@@ -18667,18 +18634,6 @@
       "aav": 950000,
       "capHits": {
         "2026-27": 842284
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
-      "playerId": "SR_97585",
-      "team": "PIT",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 905000,
-      "capHits": {
-        "2026-27": 835035
       },
       "source": "Spotrac",
       "expiryStatus": "RFA"
@@ -18738,16 +18693,16 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_89371",
+      "playerId": "SR_31783",
       "team": "PIT",
       "startSeason": "2026-27",
       "years": 1,
-      "aav": 1500000,
+      "aav": 1125000,
       "capHits": {
-        "2026-27": 1500000
+        "2026-27": 1125000
       },
       "source": "Spotrac",
-      "expiryStatus": "UFA"
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_99331",
@@ -18758,6 +18713,43 @@
       "capHits": {
         "2026-27": 986250,
         "2027-28": 986250
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
+    },
+    {
+      "playerId": "SR_89371",
+      "team": "PIT",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 1500000,
+      "capHits": {
+        "2026-27": 375000
+      },
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
+    },
+    {
+      "playerId": "SR_97585",
+      "team": "PIT",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 905000,
+      "capHits": {
+        "2026-27": 65310
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
+    },
+    {
+      "playerId": "SR_94217",
+      "team": "PIT",
+      "startSeason": "2026-27",
+      "years": 2,
+      "aav": 960000,
+      "capHits": {
+        "2026-27": 29688,
+        "2027-28": 0
       },
       "source": "Spotrac",
       "expiryStatus": "RFA"
@@ -19130,6 +19122,23 @@
       "expiryStatus": "UFA"
     },
     {
+      "playerId": "SR_48850",
+      "team": "WSH",
+      "startSeason": "2026-27",
+      "years": 5,
+      "aav": 5850000,
+      "capHits": {
+        "2026-27": 5850000,
+        "2027-28": 5850000,
+        "2028-29": 5850000,
+        "2029-30": 5850000,
+        "2030-31": 5850000
+      },
+      "source": "Spotrac",
+      "clause": "M-NTC",
+      "expiryStatus": "UFA"
+    },
+    {
       "playerId": "SR_9286",
       "team": "WSH",
       "startSeason": "2026-27",
@@ -19358,35 +19367,6 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_27194",
-      "team": "WSH",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 812500,
-      "capHits": {
-        "2026-27": 711960
-      },
-      "source": "Spotrac",
-      "expiryStatus": "UFA"
-    },
-    {
-      "playerId": "SR_48850",
-      "team": "WSH",
-      "startSeason": "2026-27",
-      "years": 5,
-      "aav": 5850000,
-      "capHits": {
-        "2026-27": 5850000,
-        "2027-28": 5850000,
-        "2028-29": 5850000,
-        "2029-30": 5850000,
-        "2030-31": 5850000
-      },
-      "source": "Spotrac",
-      "clause": "M-NTC",
-      "expiryStatus": "UFA"
-    },
-    {
       "playerId": "SR_21684",
       "team": "WSH",
       "startSeason": "2026-27",
@@ -19439,6 +19419,18 @@
       "aav": 900000,
       "capHits": {
         "2026-27": 23195
+      },
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
+    },
+    {
+      "playerId": "SR_27194",
+      "team": "WSH",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 812500,
+      "capHits": {
+        "2026-27": 20940
       },
       "source": "Spotrac",
       "expiryStatus": "UFA"
@@ -20943,7 +20935,8 @@
       "capHits": {
         "2026-27": 12000000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_17992",
@@ -20961,7 +20954,8 @@
         "2032-33": 12000000
       },
       "source": "Spotrac",
-      "clause": "NMC"
+      "clause": "NMC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_31642",
@@ -20992,7 +20986,8 @@
         "2026-27": 9850000
       },
       "source": "Spotrac",
-      "clause": "NMC"
+      "clause": "NMC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_23682",
@@ -21006,7 +21001,8 @@
         "2028-29": 8450000
       },
       "source": "Spotrac",
-      "clause": "NMC"
+      "clause": "NMC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_22492",
@@ -21022,7 +21018,8 @@
         "2030-31": 8450000
       },
       "source": "Spotrac",
-      "clause": "NMC"
+      "clause": "NMC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_73777",
@@ -21036,7 +21033,8 @@
         "2028-29": 8400000,
         "2029-30": 8400000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_23705",
@@ -21054,7 +21052,8 @@
         "2032-33": 8250000
       },
       "source": "Spotrac",
-      "clause": "NMC"
+      "clause": "NMC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_20314",
@@ -21081,7 +21080,8 @@
         "2030-31": 3700000
       },
       "source": "Spotrac",
-      "clause": "M-NTC"
+      "clause": "M-NTC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_10760",
@@ -21093,7 +21093,8 @@
         "2026-27": 2000000,
         "2027-28": 2000000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_27091",
@@ -21105,7 +21106,8 @@
         "2026-27": 1750000,
         "2027-28": 1750000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_6348",
@@ -21117,7 +21119,8 @@
         "2026-27": 1500000
       },
       "source": "Spotrac",
-      "clause": "M-NTC"
+      "clause": "M-NTC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_23829",
@@ -21140,7 +21143,8 @@
         "2027-28": 2500000,
         "2028-29": 2500000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_30273",
@@ -21151,7 +21155,8 @@
       "capHits": {
         "2026-27": 1000000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_90211",
@@ -21163,7 +21168,8 @@
         "2026-27": 950000,
         "2027-28": 950000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_78328",
@@ -21174,29 +21180,8 @@
       "capHits": {
         "2026-27": 918333
       },
-      "source": "Spotrac"
-    },
-    {
-      "playerId": "SR_106703",
-      "team": "DAL",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 850000,
-      "capHits": {
-        "2026-27": 883194
-      },
-      "source": "Spotrac"
-    },
-    {
-      "playerId": "SR_106703",
-      "team": "DAL",
-      "startSeason": "2027-28",
-      "years": 1,
-      "aav": 1013750,
-      "capHits": {
-        "2027-28": 0
-      },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_21115",
@@ -21208,7 +21193,8 @@
         "2026-27": 875000,
         "2027-28": 875000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_90287",
@@ -21220,7 +21206,8 @@
         "2026-27": 865979,
         "2027-28": 875000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_6357",
@@ -21231,7 +21218,8 @@
       "capHits": {
         "2026-27": 850000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_2082",
@@ -21242,7 +21230,8 @@
       "capHits": {
         "2026-27": 850000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_27596",
@@ -21253,7 +21242,8 @@
       "capHits": {
         "2026-27": 841152
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_78489",
@@ -21263,9 +21253,10 @@
       "aav": 875000,
       "capHits": {
         "2026-27": 757680,
-        "2027-28": 0
+        "2027-28": 875000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_15230",
@@ -21279,7 +21270,8 @@
         "2028-29": 5250000,
         "2029-30": 5250000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_6352",
@@ -21293,7 +21285,8 @@
         "2028-29": 4500000
       },
       "source": "Spotrac",
-      "clause": "NMC"
+      "clause": "NMC",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_27145",
@@ -21304,7 +21297,8 @@
       "capHits": {
         "2026-27": 825000
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_25010",
@@ -21315,7 +21309,21 @@
       "capHits": {
         "2026-27": 57552
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
+    },
+    {
+      "playerId": "SR_106703",
+      "team": "DAL",
+      "startSeason": "2026-27",
+      "years": 2,
+      "aav": 1013750,
+      "capHits": {
+        "2026-27": 15678,
+        "2027-28": 0
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_97625",
@@ -21327,7 +21335,8 @@
         "2026-27": 4557,
         "2027-28": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_84617",
@@ -21340,7 +21349,8 @@
         "2027-28": 0,
         "2028-29": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_106688",
@@ -21352,7 +21362,8 @@
         "2026-27": 0,
         "2027-28": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_99871",
@@ -21363,7 +21374,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_107286",
@@ -21374,7 +21386,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_62991",
@@ -21385,7 +21398,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_101217",
@@ -21398,7 +21412,8 @@
         "2027-28": 0,
         "2028-29": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_84681",
@@ -21410,7 +21425,8 @@
         "2026-27": 0,
         "2027-28": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_94307",
@@ -21423,7 +21439,8 @@
         "2027-28": 0,
         "2028-29": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_90151",
@@ -21434,7 +21451,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_73829",
@@ -21445,7 +21463,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_94131",
@@ -21458,7 +21477,8 @@
         "2027-28": 0,
         "2028-29": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_84553",
@@ -21470,7 +21490,8 @@
         "2026-27": 0,
         "2027-28": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_84649",
@@ -21481,7 +21502,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_90208",
@@ -21493,7 +21515,8 @@
         "2026-27": 0,
         "2027-28": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_73835",
@@ -21504,7 +21527,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_16644",
@@ -21515,7 +21539,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_17961",
@@ -21526,7 +21551,8 @@
       "capHits": {
         "2026-27": 0
       },
-      "source": "Spotrac"
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
     },
     {
       "playerId": "SR_48851",
@@ -26015,20 +26041,6 @@
       "clause": "NMC"
     },
     {
-      "playerId": "SR_17827",
-      "team": "EDM",
-      "startSeason": "2026-27",
-      "years": 2,
-      "aav": 5500000,
-      "capHits": {
-        "2026-27": 5500000,
-        "2027-28": 5500000
-      },
-      "source": "Spotrac",
-      "clause": "M-NTC",
-      "expiryStatus": "UFA"
-    },
-    {
       "playerId": "SR_13529",
       "team": "EDM",
       "startSeason": "2026-27",
@@ -26067,6 +26079,23 @@
         "2028-29": 4100000,
         "2029-30": 4100000,
         "2030-31": 4100000
+      },
+      "source": "Spotrac",
+      "clause": "NMC",
+      "expiryStatus": "UFA"
+    },
+    {
+      "playerId": "SR_15276",
+      "team": "EDM",
+      "startSeason": "2026-27",
+      "years": 5,
+      "aav": 4000000,
+      "capHits": {
+        "2026-27": 4000000,
+        "2027-28": 4000000,
+        "2028-29": 4000000,
+        "2029-30": 4000000,
+        "2030-31": 4000000
       },
       "source": "Spotrac",
       "clause": "NMC",
@@ -26285,20 +26314,17 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_15276",
+      "playerId": "SR_17827",
       "team": "EDM",
       "startSeason": "2026-27",
-      "years": 5,
-      "aav": 4000000,
+      "years": 2,
+      "aav": 5500000,
       "capHits": {
-        "2026-27": 4000000,
-        "2027-28": 4000000,
-        "2028-29": 4000000,
-        "2029-30": 4000000,
-        "2030-31": 4000000
+        "2026-27": 5500000,
+        "2027-28": 5500000
       },
       "source": "Spotrac",
-      "clause": "NMC",
+      "clause": "M-NTC",
       "expiryStatus": "UFA"
     },
     {
@@ -27324,21 +27350,6 @@
       "expiryStatus": "UFA"
     },
     {
-      "playerId": "SR_15222",
-      "team": "SJS",
-      "startSeason": "2026-27",
-      "years": 3,
-      "aav": 6000000,
-      "capHits": {
-        "2026-27": 6000000,
-        "2027-28": 6000000,
-        "2028-29": 6000000
-      },
-      "source": "Spotrac",
-      "clause": "NTC",
-      "expiryStatus": "UFA"
-    },
-    {
       "playerId": "SR_25031",
       "team": "SJS",
       "startSeason": "2026-27",
@@ -27553,31 +27564,6 @@
       "expiryStatus": "RFA"
     },
     {
-      "playerId": "SR_94139",
-      "team": "SJS",
-      "startSeason": "2026-27",
-      "years": 2,
-      "aav": 945417,
-      "capHits": {
-        "2026-27": 945417,
-        "2027-28": 945417
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
-      "playerId": "SR_84615",
-      "team": "SJS",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 920000,
-      "capHits": {
-        "2026-27": 920000
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
       "playerId": "SR_73786",
       "team": "SJS",
       "startSeason": "2026-27",
@@ -27603,6 +27589,30 @@
       "expiryStatus": "UFA"
     },
     {
+      "playerId": "SR_78337",
+      "team": "SJS",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 918333,
+      "capHits": {
+        "2026-27": 781110
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
+    },
+    {
+      "playerId": "SR_20322",
+      "team": "SJS",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 850000,
+      "capHits": {
+        "2026-27": 722865
+      },
+      "source": "Spotrac",
+      "expiryStatus": "UFA"
+    },
+    {
       "playerId": "SR_6376",
       "team": "SJS",
       "startSeason": "2026-27",
@@ -27614,6 +27624,46 @@
       "source": "Spotrac",
       "clause": "M-NTC",
       "expiryStatus": "UFA"
+    },
+    {
+      "playerId": "SR_15222",
+      "team": "SJS",
+      "startSeason": "2026-27",
+      "years": 3,
+      "aav": 6000000,
+      "capHits": {
+        "2026-27": 6000000,
+        "2027-28": 6000000,
+        "2028-29": 6000000
+      },
+      "source": "Spotrac",
+      "clause": "NTC",
+      "expiryStatus": "UFA"
+    },
+    {
+      "playerId": "SR_94139",
+      "team": "SJS",
+      "startSeason": "2026-27",
+      "years": 2,
+      "aav": 945417,
+      "capHits": {
+        "2026-27": 945417,
+        "2027-28": 945417
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
+    },
+    {
+      "playerId": "SR_84615",
+      "team": "SJS",
+      "startSeason": "2026-27",
+      "years": 1,
+      "aav": 920000,
+      "capHits": {
+        "2026-27": 137518
+      },
+      "source": "Spotrac",
+      "expiryStatus": "RFA"
     },
     {
       "playerId": "SR_24995",
@@ -27747,18 +27797,6 @@
       "expiryStatus": "RFA"
     },
     {
-      "playerId": "SR_78337",
-      "team": "SJS",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 918333,
-      "capHits": {
-        "2026-27": 0
-      },
-      "source": "Spotrac",
-      "expiryStatus": "RFA"
-    },
-    {
       "playerId": "SR_84514",
       "team": "SJS",
       "startSeason": "2026-27",
@@ -27785,18 +27823,6 @@
     },
     {
       "playerId": "SR_28722",
-      "team": "SJS",
-      "startSeason": "2026-27",
-      "years": 1,
-      "aav": 850000,
-      "capHits": {
-        "2026-27": 0
-      },
-      "source": "Spotrac",
-      "expiryStatus": "UFA"
-    },
-    {
-      "playerId": "SR_20322",
       "team": "SJS",
       "startSeason": "2026-27",
       "years": 1,
@@ -29853,6 +29879,12 @@
         "l": 2,
         "ot": 2
       },
+      "EDM": {
+        "gp": 13,
+        "w": 9,
+        "l": 2,
+        "ot": 2
+      },
       "MIN": {
         "gp": 14,
         "w": 9,
@@ -29871,17 +29903,11 @@
         "l": 4,
         "ot": 1
       },
-      "EDM": {
-        "gp": 12,
-        "w": 8,
-        "l": 2,
-        "ot": 2
-      },
-      "NJD": {
-        "gp": 12,
+      "SEA": {
+        "gp": 13,
         "w": 8,
         "l": 4,
-        "ot": 0
+        "ot": 1
       },
       "MTL": {
         "gp": 12,
@@ -29890,6 +29916,12 @@
         "ot": 2
       },
       "UTA": {
+        "gp": 13,
+        "w": 8,
+        "l": 5,
+        "ot": 0
+      },
+      "NJD": {
         "gp": 13,
         "w": 8,
         "l": 5,
@@ -29908,9 +29940,9 @@
         "ot": 2
       },
       "TOR": {
-        "gp": 14,
+        "gp": 15,
         "w": 7,
-        "l": 5,
+        "l": 6,
         "ot": 2
       },
       "TBL": {
@@ -29919,16 +29951,16 @@
         "l": 3,
         "ot": 1
       },
-      "SEA": {
+      "DAL": {
         "gp": 12,
         "w": 7,
         "l": 4,
         "ot": 1
       },
-      "DAL": {
-        "gp": 12,
+      "COL": {
+        "gp": 13,
         "w": 7,
-        "l": 4,
+        "l": 5,
         "ot": 1
       },
       "NYR": {
@@ -29937,17 +29969,17 @@
         "l": 6,
         "ot": 1
       },
+      "WSH": {
+        "gp": 11,
+        "w": 7,
+        "l": 4,
+        "ot": 0
+      },
       "NYI": {
         "gp": 12,
         "w": 6,
         "l": 4,
         "ot": 2
-      },
-      "COL": {
-        "gp": 12,
-        "w": 6,
-        "l": 5,
-        "ot": 1
       },
       "NSH": {
         "gp": 12,
@@ -29972,12 +30004,6 @@
         "w": 6,
         "l": 6,
         "ot": 1
-      },
-      "WSH": {
-        "gp": 10,
-        "w": 6,
-        "l": 4,
-        "ot": 0
       },
       "STL": {
         "gp": 12,
@@ -30010,15 +30036,15 @@
         "ot": 0
       },
       "CGY": {
-        "gp": 11,
+        "gp": 12,
         "w": 5,
-        "l": 6,
+        "l": 7,
         "ot": 0
       },
       "PHI": {
-        "gp": 14,
+        "gp": 15,
         "w": 3,
-        "l": 7,
+        "l": 8,
         "ot": 4
       },
       "LAK": {
@@ -33091,6 +33117,14 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_32386",
+            "category": "active",
+            "capHit": 3250000,
+            "baseSalary": 2625000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_16130",
             "category": "active",
             "capHit": 3150000,
@@ -33205,14 +33239,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_18927",
-            "category": "ir",
-            "capHit": 2500000,
-            "baseSalary": 2000000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_76450",
             "category": "ir",
             "capHit": 1400000,
@@ -33246,10 +33272,10 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_32386",
+            "playerId": "SR_18927",
             "category": "ltir",
-            "capHit": 3250000,
-            "baseSalary": 2625000,
+            "capHit": 2500000,
+            "baseSalary": 2000000,
             "clause": "M-NTC"
           },
           {
@@ -33427,9 +33453,9 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-24.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/toronto-maple-leafs/cap/_/year/2026",
-          "Sections: Active Roster Cap=87970937; Injured List Cap=13586622; Long-Term Injured Reserve Cap=12253000; Minor=9278.",
+          "Sections: Active Roster Cap=91220937; Injured List Cap=11086622; Long-Term Injured Reserve Cap=11503000; Minor=9278.",
           "Spotrac total allocations=$113,819,837; cap space=$0."
         ]
       },
@@ -36226,13 +36252,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_31783",
-            "category": "active",
-            "capHit": 1125000,
-            "baseSalary": 1125000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_78428",
             "category": "active",
             "capHit": 936110,
@@ -36248,15 +36267,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_94217",
-            "category": "active",
-            "capHit": 846108,
-            "aav": 960000,
-            "baseSalary": 850000,
-            "signingBonus": 85000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_78324",
             "category": "active",
             "capHit": 842284,
@@ -36264,15 +36274,6 @@
             "baseSalary": 855000,
             "signingBonus": 95000,
             "incentives": 500000
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_97585",
-            "category": "active",
-            "capHit": 835035,
-            "aav": 905000,
-            "baseSalary": 850000,
-            "signingBonus": 55000
           },
           {
             "kind": "player",
@@ -36307,10 +36308,10 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_89371",
+            "playerId": "SR_31783",
             "category": "ir",
-            "capHit": 1500000,
-            "baseSalary": 1500000
+            "capHit": 1125000,
+            "baseSalary": 1125000
           },
           {
             "kind": "player",
@@ -36320,6 +36321,41 @@
             "baseSalary": 877500,
             "signingBonus": 97500,
             "incentives": 500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_89371",
+            "category": "minors",
+            "capHit": 375000,
+            "aav": 1500000,
+            "baseSalary": 1500000,
+            "notes": [
+              "Buried"
+            ]
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_97585",
+            "category": "minors",
+            "capHit": 65310,
+            "aav": 905000,
+            "baseSalary": 850000,
+            "signingBonus": 55000,
+            "notes": [
+              "Buried"
+            ]
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94217",
+            "category": "minors",
+            "capHit": 29688,
+            "aav": 960000,
+            "baseSalary": 850000,
+            "signingBonus": 85000,
+            "notes": [
+              "Buried"
+            ]
           },
           {
             "kind": "player",
@@ -36538,10 +36574,10 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-26.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/pittsburgh-penguins/cap/_/year/2026",
-          "Sections: Active Roster Cap=77609537; Injured List Cap=21111250; Buyout Cap=0; Retained Cap=500000; Minor=21905.",
-          "Spotrac total allocations=$99,242,692; cap space=$4,757,308."
+          "Sections: Active Roster Cap=74803394; Injured List Cap=20736250; Buyout Cap=0; Retained Cap=500000; Minor=491903.",
+          "Spotrac total allocations=$96,531,547; cap space=$7,468,453."
         ]
       },
       "WSH": {
@@ -36597,6 +36633,15 @@
             "category": "active",
             "capHit": 6000000,
             "baseSalary": 6000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_48850",
+            "category": "active",
+            "capHit": 5850000,
+            "baseSalary": 4850000,
+            "signingBonus": 2000000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
@@ -36722,23 +36767,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_27194",
-            "category": "active",
-            "capHit": 711960,
-            "aav": 812500,
-            "baseSalary": 850000
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_48850",
-            "category": "ir",
-            "capHit": 5850000,
-            "baseSalary": 4850000,
-            "signingBonus": 2000000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_21684",
             "category": "ir",
             "capHit": 5750000,
@@ -36769,6 +36797,17 @@
             "capHit": 23195,
             "aav": 900000,
             "baseSalary": 900000,
+            "notes": [
+              "Buried"
+            ]
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_27194",
+            "category": "minors",
+            "capHit": 20940,
+            "aav": 812500,
+            "baseSalary": 850000,
             "notes": [
               "Buried"
             ]
@@ -36995,10 +37034,10 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-26.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/cap/_/year/2026",
-          "Sections: Active Roster Cap=84926932; Injured List Cap=15800000; Long-Term Injured Reserve Cap=4600000; Minor=40719.",
-          "Spotrac total allocations=$105,920,151; cap space=-$552,500."
+          "Sections: Active Roster Cap=90064972; Injured List Cap=9950000; Long-Term Injured Reserve Cap=4600000; Minor=61659.",
+          "Spotrac total allocations=$105,229,131; cap space=-$552,500."
         ]
       },
       "CHI": {
@@ -37976,16 +38015,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_106703",
-            "category": "active",
-            "capHit": 883194,
-            "aav": 850000,
-            "baseSalary": 850000,
-            "signingBonus": 102500,
-            "incentives": 72500
-          },
-          {
-            "kind": "player",
             "playerId": "SR_21115",
             "category": "active",
             "capHit": 875000,
@@ -38061,6 +38090,19 @@
             "capHit": 57552,
             "aav": 850000,
             "baseSalary": 850000,
+            "notes": [
+              "Buried"
+            ]
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_106703",
+            "category": "minors",
+            "capHit": 15678,
+            "aav": 1013750,
+            "baseSalary": 850000,
+            "signingBonus": 102500,
+            "incentives": 72500,
             "notes": [
               "Buried"
             ]
@@ -38260,10 +38302,10 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-26.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/cap/_/year/2026",
-          "Sections: Active Roster Cap=95178838; Injured List Cap=5250000; Long-Term Injured Reserve Cap=5325000; Minor=62109.",
-          "Spotrac total allocations=$105,815,947; cap space=$0."
+          "Sections: Active Roster Cap=94295644; Injured List Cap=5250000; Long-Term Injured Reserve Cap=5325000; Minor=77787.",
+          "Spotrac total allocations=$104,948,431; cap space=$0."
         ]
       },
       "MIN": {
@@ -41265,15 +41307,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_17827",
-            "category": "active",
-            "capHit": 5500000,
-            "baseSalary": 2175000,
-            "signingBonus": 3000000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_13529",
             "category": "active",
             "capHit": 5375000,
@@ -41294,6 +41327,15 @@
             "category": "active",
             "capHit": 4100000,
             "baseSalary": 2600000,
+            "signingBonus": 1500000,
+            "clause": "NMC"
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15276",
+            "category": "active",
+            "capHit": 4000000,
+            "baseSalary": 2500000,
             "signingBonus": 1500000,
             "clause": "NMC"
           },
@@ -41423,12 +41465,12 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15276",
+            "playerId": "SR_17827",
             "category": "ir",
-            "capHit": 4000000,
-            "baseSalary": 2500000,
-            "signingBonus": 1500000,
-            "clause": "NMC"
+            "capHit": 5500000,
+            "baseSalary": 2175000,
+            "signingBonus": 3000000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
@@ -41673,9 +41715,9 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-25.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/edmonton-oilers/cap/_/year/2026",
-          "Sections: Active Roster Cap=92803937; Injured List Cap=7262500; Long-Term Injured Reserve Cap=850000; Buyout Cap=2600000; Minor=80416.",
+          "Sections: Active Roster Cap=91303937; Injured List Cap=8762500; Long-Term Injured Reserve Cap=850000; Buyout Cap=2600000; Minor=80416.",
           "Spotrac total allocations=$103,596,853; cap space=$153,147."
         ]
       },
@@ -42181,15 +42223,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15222",
-            "category": "active",
-            "capHit": 6000000,
-            "baseSalary": 5000000,
-            "signingBonus": 2000000,
-            "clause": "NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_25031",
             "category": "active",
             "capHit": 5750000,
@@ -42306,23 +42339,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_94139",
-            "category": "active",
-            "capHit": 945417,
-            "baseSalary": 877500,
-            "signingBonus": 97500
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_84615",
-            "category": "active",
-            "capHit": 920000,
-            "baseSalary": 850000,
-            "signingBonus": 95000,
-            "incentives": 30000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_73786",
             "category": "active",
             "capHit": 875000,
@@ -42337,11 +42353,57 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_78337",
+            "category": "active",
+            "capHit": 781110,
+            "aav": 918333,
+            "baseSalary": 855000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_20322",
+            "category": "active",
+            "capHit": 722865,
+            "aav": 850000,
+            "baseSalary": 850000
+          },
+          {
+            "kind": "player",
             "playerId": "SR_6376",
             "category": "ir",
             "capHit": 8000000,
             "baseSalary": 6000000,
             "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15222",
+            "category": "ir",
+            "capHit": 6000000,
+            "baseSalary": 5000000,
+            "signingBonus": 2000000,
+            "clause": "NTC"
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94139",
+            "category": "ir",
+            "capHit": 945417,
+            "baseSalary": 877500,
+            "signingBonus": 97500
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_84615",
+            "category": "minors",
+            "capHit": 137518,
+            "aav": 920000,
+            "baseSalary": 850000,
+            "signingBonus": 95000,
+            "incentives": 30000,
+            "notes": [
+              "Buried"
+            ]
           },
           {
             "kind": "player",
@@ -42450,15 +42512,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_78337",
-            "category": "minors",
-            "capHit": 0,
-            "aav": 918333,
-            "baseSalary": 855000,
-            "notes": []
-          },
-          {
-            "kind": "player",
             "playerId": "SR_84514",
             "category": "minors",
             "capHit": 0,
@@ -42478,15 +42531,6 @@
           {
             "kind": "player",
             "playerId": "SR_28722",
-            "category": "minors",
-            "capHit": 0,
-            "aav": 850000,
-            "baseSalary": 850000,
-            "notes": []
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_20322",
             "category": "minors",
             "capHit": 0,
             "aav": 850000,
@@ -42552,15 +42596,15 @@
             "id": "SJS-totals-2",
             "label": "Performance Bonus Cushion Charge",
             "category": "bonusOverage",
-            "amount": 6430000,
+            "amount": 6400000,
             "notes": "From Spotrac cap totals"
           }
         ],
         "notes": [
-          "Imported from Spotrac 2026-27 cap table on 2026-10-12.",
+          "Imported from Spotrac 2026-27 cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/san-jose-sharks/cap/_/year/2026",
-          "Sections: Active Roster Cap=80397083; Injured List Cap=8000000; Buyout Cap=2833334; Retained Cap=2887500; Minor=10290.",
-          "Spotrac total allocations=$100,558,207; cap space=$2,523,099."
+          "Sections: Active Roster Cap=74035641; Injured List Cap=14945417; Buyout Cap=2833334; Retained Cap=2887500; Minor=147808.",
+          "Spotrac total allocations=$101,249,700; cap space=$1,831,606."
         ]
       },
       "SEA": {
@@ -45312,6 +45356,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_32386",
+            "category": "active",
+            "capHit": 3250000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_16130",
             "category": "active",
             "capHit": 3150000,
@@ -45376,13 +45427,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_18927",
-            "category": "active",
-            "capHit": 2500000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_13414",
             "category": "active",
             "capHit": 3750000,
@@ -45390,9 +45434,9 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_32386",
+            "playerId": "SR_18927",
             "category": "active",
-            "capHit": 3250000,
+            "capHit": 2500000,
             "clause": "M-NTC"
           },
           {
@@ -45486,7 +45530,7 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-24.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/toronto-maple-leafs/yearly/",
           "Spotrac total cap=$110,727,382.",
           "Contracts listed total $1,250,000 more than Spotrac's projected total cap."
@@ -46773,12 +46817,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_94217",
-            "category": "active",
-            "capHit": 960000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_16137",
             "category": "active",
             "capHit": 5125000
@@ -46832,6 +46870,14 @@
             "category": "minors",
             "capHit": 0,
             "aav": 965000,
+            "notes": []
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94217",
+            "category": "minors",
+            "capHit": 0,
+            "aav": 960000,
             "notes": []
           },
           {
@@ -46901,10 +46947,9 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-24.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/pittsburgh-penguins/yearly/",
-          "Spotrac total cap=$54,411,250.",
-          "Contracts listed total $960,000 more than Spotrac's projected total cap."
+          "Spotrac total cap=$54,411,250."
         ]
       },
       "WSH": {
@@ -46950,6 +46995,13 @@
             "playerId": "SR_27115",
             "category": "active",
             "capHit": 6000000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_48850",
+            "category": "active",
+            "capHit": 5850000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
@@ -47017,13 +47069,6 @@
             "playerId": "SR_62948",
             "category": "active",
             "capHit": 6350000
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_48850",
-            "category": "active",
-            "capHit": 5850000,
-            "clause": "M-NTC"
           },
           {
             "kind": "player",
@@ -47135,7 +47180,7 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-26.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/yearly/",
           "Spotrac total cap=$111,099,583."
         ]
@@ -47557,12 +47602,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15230",
-            "category": "active",
-            "capHit": 5250000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_20314",
             "category": "active",
             "capHit": 3700000,
@@ -47603,6 +47642,18 @@
             "playerId": "SR_90287",
             "category": "active",
             "capHit": 875000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_78489",
+            "category": "active",
+            "capHit": 875000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15230",
+            "category": "active",
+            "capHit": 5250000
           },
           {
             "kind": "player",
@@ -47690,22 +47741,14 @@
             "capHit": 0,
             "aav": 875000,
             "notes": []
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_78489",
-            "category": "minors",
-            "capHit": 0,
-            "aav": 875000,
-            "notes": []
           }
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-10.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/yearly/",
           "Spotrac total cap=$77,662,500.",
-          "Contracts listed total $875,000 more than Spotrac's projected total cap."
+          "Contracts listed total $1,750,000 more than Spotrac's projected total cap."
         ]
       },
       "MIN": {
@@ -49192,13 +49235,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_17827",
-            "category": "active",
-            "capHit": 5500000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_13529",
             "category": "active",
             "capHit": 5375000
@@ -49214,6 +49250,13 @@
             "playerId": "SR_8351",
             "category": "active",
             "capHit": 4100000,
+            "clause": "NMC"
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15276",
+            "category": "active",
+            "capHit": 4000000,
             "clause": "NMC"
           },
           {
@@ -49269,10 +49312,10 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15276",
+            "playerId": "SR_17827",
             "category": "active",
-            "capHit": 4000000,
-            "clause": "NMC"
+            "capHit": 5500000,
+            "clause": "M-NTC"
           },
           {
             "kind": "player",
@@ -49341,7 +49384,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-25.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/edmonton-oilers/yearly/",
           "Spotrac total cap=$89,222,500."
         ]
@@ -49591,13 +49634,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15222",
-            "category": "active",
-            "capHit": 6000000,
-            "clause": "NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_25031",
             "category": "active",
             "capHit": 5750000,
@@ -49659,15 +49695,22 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_94139",
-            "category": "active",
-            "capHit": 945417
-          },
-          {
-            "kind": "player",
             "playerId": "SR_73786",
             "category": "active",
             "capHit": 875000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15222",
+            "category": "active",
+            "capHit": 6000000,
+            "clause": "NTC"
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_94139",
+            "category": "active",
+            "capHit": 945417
           },
           {
             "kind": "player",
@@ -49767,7 +49810,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-10.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/san-jose-sharks/yearly/",
           "Spotrac total cap=$83,700,417."
         ]
@@ -52144,6 +52187,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_48850",
+            "category": "active",
+            "capHit": 5850000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_9286",
             "category": "active",
             "capHit": 5750000,
@@ -52172,13 +52222,6 @@
             "playerId": "SR_62948",
             "category": "active",
             "capHit": 6350000
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_48850",
-            "category": "active",
-            "capHit": 5850000,
-            "clause": "M-NTC"
           },
           {
             "kind": "player",
@@ -52250,7 +52293,7 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-26.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/yearly/",
           "Spotrac total cap=$95,972,500."
         ]
@@ -52485,12 +52528,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15230",
-            "category": "active",
-            "capHit": 5250000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_20314",
             "category": "active",
             "capHit": 3700000,
@@ -52501,6 +52538,12 @@
             "playerId": "SR_23829",
             "category": "active",
             "capHit": 2500000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15230",
+            "category": "active",
+            "capHit": 5250000
           },
           {
             "kind": "player",
@@ -52544,7 +52587,7 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-10.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/yearly/",
           "Spotrac total cap=$72,087,500."
         ]
@@ -53396,6 +53439,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_15276",
+            "category": "active",
+            "capHit": 4000000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_49805",
             "category": "active",
             "capHit": 4000000,
@@ -53423,13 +53473,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15276",
-            "category": "active",
-            "capHit": 4000000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_94346",
             "category": "minors",
             "capHit": 0,
@@ -53447,7 +53490,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-25.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/edmonton-oilers/yearly/",
           "Spotrac total cap=$61,025,000."
         ]
@@ -53607,13 +53650,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15222",
-            "category": "active",
-            "capHit": 6000000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_25031",
             "category": "active",
             "capHit": 5750000,
@@ -53651,6 +53687,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_15222",
+            "category": "active",
+            "capHit": 6000000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_94188",
             "category": "minors",
             "capHit": 0,
@@ -53676,7 +53719,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-10.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/san-jose-sharks/yearly/",
           "Spotrac total cap=$68,362,500."
         ]
@@ -55140,6 +55183,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_48850",
+            "category": "active",
+            "capHit": 5850000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_9286",
             "category": "active",
             "capHit": 5750000,
@@ -55160,13 +55210,6 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_48850",
-            "category": "active",
-            "capHit": 5850000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
             "playerId": "SR_21684",
             "category": "active",
             "capHit": 5750000,
@@ -55181,7 +55224,7 @@
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-26.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/yearly/",
           "Spotrac total cap=$87,065,000."
         ]
@@ -55347,20 +55390,20 @@
           },
           {
             "kind": "player",
-            "playerId": "SR_15230",
-            "category": "active",
-            "capHit": 5250000
-          },
-          {
-            "kind": "player",
             "playerId": "SR_20314",
             "category": "active",
             "capHit": 3700000
+          },
+          {
+            "kind": "player",
+            "playerId": "SR_15230",
+            "category": "active",
+            "capHit": 5250000
           }
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-10.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/dallas-stars/yearly/",
           "Spotrac total cap=$56,637,500."
         ]
@@ -55790,6 +55833,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_15276",
+            "category": "active",
+            "capHit": 4000000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_49805",
             "category": "active",
             "capHit": 4000000,
@@ -55800,13 +55850,6 @@
             "playerId": "SR_20313",
             "category": "active",
             "capHit": 3850000,
-            "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_15276",
-            "category": "active",
-            "capHit": 4000000,
             "clause": "M-NTC"
           }
         ],
@@ -55820,7 +55863,7 @@
           }
         ],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-25.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/edmonton-oilers/yearly/",
           "Spotrac total cap=$38,450,000."
         ]
@@ -56878,6 +56921,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_48850",
+            "category": "active",
+            "capHit": 5850000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_84496",
             "category": "active",
             "capHit": 10500000
@@ -56888,18 +56938,11 @@
             "category": "active",
             "capHit": 6350000,
             "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_48850",
-            "category": "active",
-            "capHit": 5850000,
-            "clause": "M-NTC"
           }
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-26.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/washington-capitals/yearly/",
           "Spotrac total cap=$71,365,000."
         ]
@@ -57400,6 +57443,13 @@
           },
           {
             "kind": "player",
+            "playerId": "SR_15276",
+            "category": "active",
+            "capHit": 4000000,
+            "clause": "M-NTC"
+          },
+          {
+            "kind": "player",
             "playerId": "SR_49805",
             "category": "active",
             "capHit": 4000000,
@@ -57411,18 +57461,11 @@
             "category": "active",
             "capHit": 3850000,
             "clause": "M-NTC"
-          },
-          {
-            "kind": "player",
-            "playerId": "SR_15276",
-            "category": "active",
-            "capHit": 4000000,
-            "clause": "M-NTC"
           }
         ],
         "adjustments": [],
         "notes": [
-          "Imported from Spotrac multi-year cap table on 2026-10-25.",
+          "Imported from Spotrac multi-year cap table on 2026-10-29.",
           "Source URL: https://www.spotrac.com/nhl/edmonton-oilers/yearly/",
           "Spotrac total cap=$36,950,000."
         ]
